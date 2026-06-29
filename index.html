@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -137,6 +138,120 @@
     main{padding:10px;} header{padding:8px 12px;} header h1{font-size:13px;}
     .nav-tab{padding:4px 8px;font-size:11px;} .num-input{width:58px;font-size:12px;} .med-naam{font-size:12px;}
   }
+
+  /* ===== RAPPORT STIJL ===== */
+  .rapport-persoon {
+    background: #0d1b2a;
+    border: 1px solid #243450;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    overflow: hidden;
+    page-break-inside: avoid;
+  }
+  .rapport-header {
+    background: linear-gradient(135deg, #162436 0%, #1e3148 100%);
+    border-bottom: 2px solid #c9a84c;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .rapport-naam {
+    font-size: 22px;
+    font-weight: 700;
+    color: #f0f4f8;
+    letter-spacing: 0.5px;
+  }
+  .rapport-meta {
+    font-size: 11px;
+    color: #7a94b0;
+    margin-top: 3px;
+  }
+  .rapport-status-groot {
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 18px;
+    border-radius: 20px;
+  }
+  .rapport-body { padding: 20px 24px; }
+
+  .rapport-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .rapport-metric-kaart {
+    background: #162436;
+    border: 1px solid #243450;
+    border-radius: 8px;
+    padding: 14px;
+    position: relative;
+  }
+  .rapport-metric-kaart.rood { border-color: #e05252; background: #2a1515; }
+  .rapport-metric-kaart.groen { border-color: #4caf7d; }
+  .rapport-metric-kaart.goud { border-color: #c9a84c; }
+
+  .rmk-icon { font-size: 18px; margin-bottom: 6px; }
+  .rmk-label { font-size: 10px; color: #7a94b0; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .rmk-waarde { font-size: 28px; font-weight: 700; line-height: 1; }
+  .rmk-waarde.rood { color: #e05252; }
+  .rmk-waarde.groen { color: #4caf7d; }
+  .rmk-waarde.goud { color: #c9a84c; }
+  .rmk-norm { font-size: 10px; color: #7a94b0; margin-top: 4px; }
+  .rmk-badge { font-size: 10px; font-weight: 700; position: absolute; top: 10px; right: 10px; }
+
+  .rapport-bar-wrap { background: #0d1b2a; border-radius: 4px; height: 6px; margin-top: 8px; overflow: hidden; }
+  .rapport-bar { height: 100%; border-radius: 4px; }
+
+  .rapport-conclusie {
+    background: #162436;
+    border: 1px solid #243450;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  .rapport-conclusie strong { color: #c9a84c; }
+
+  .rapport-sparkline-wrap { margin-top: 14px; }
+  .rapport-sparkline-titel { font-size: 11px; color: #7a94b0; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+
+  .rapport-footer-bb {
+    background: #162436;
+    border-top: 1px solid #243450;
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #7a94b0;
+  }
+  .rapport-print-btn {
+    background: none;
+    border: 1px solid #243450;
+    color: #7a94b0;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .rapport-print-btn:hover { border-color: #c9a84c; color: #c9a84c; }
+
+  /* PRINT */
+  @media print {
+    header, .card > .card-title, .card > div:first-child, #rapport-meting-select,
+    .btn-primary, .rapport-print-btn, .nav-tabs, .tab-content:not(.active) { display: none !important; }
+    body { background: #0d1b2a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    main { padding: 0; }
+    .card { border: none; padding: 0; }
+    .rapport-persoon { page-break-after: always; border-radius: 0; border: none; margin: 0; }
+    .rapport-persoon:last-child { page-break-after: avoid; }
+  }
 </style>
 </head>
 <body>
@@ -150,7 +265,12 @@
     <button class="nav-tab" onclick="showTab('trend',this)">Trend & Grafiek</button>
     <button class="nav-tab" onclick="showTab('structureel',this)">Structureel</button>
     <button class="nav-tab" onclick="showTab('normen',this)">Normen</button>
+    <button class="nav-tab" onclick="showTab('rapporten',this)">📄 Rapporten</button>
   </nav>
+  <div style="display:flex;gap:6px;margin-left:8px;align-items:center;">
+    <span id="sync-status" style="font-size:11px;color:var(--text-muted);white-space:nowrap;"></span>
+    <button onclick="laadVanSheets()" style="background:#0f2a1c;border:1px solid #4caf7d;color:#4caf7d;padding:5px 10px;border-radius:6px;font-family:'Inter',sans-serif;font-size:12px;cursor:pointer;" title="Nu synchroniseren met Google Sheets">↺ Sync</button>
+  </div>
 </header>
 <main>
 
@@ -258,6 +378,55 @@
   </div>
 </div>
 
+<!-- RAPPORTEN -->
+<div id="tab-rapporten" class="tab-content">
+  <div class="card">
+    <div class="card-title">📄 Rapporten per medewerker</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
+      <label style="font-size:12px;color:var(--text-muted);font-weight:500;">Meting:</label>
+      <select id="rapport-meting-select" style="background:var(--navy-light);border:1px solid var(--border);color:var(--white);padding:6px 10px;border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;outline:none;" onchange="renderRapporten()"></select>
+      <button class="btn-primary" onclick="printAlleRapporten()" style="margin-left:auto;">🖨️ Alles afdrukken / PDF</button>
+    </div>
+    <div id="rapporten-content"><div class="empty-state"><div class="icon">📄</div>Nog geen metingen beschikbaar.</div></div>
+  </div>
+</div>
+
+<!-- INSTELLINGEN -->
+<div id="tab-instellingen" class="tab-content">
+  <div class="card">
+    <div class="card-title">⚙ Instellingen — Google Sheets koppeling</div>
+
+    <div style="background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:20px;font-size:13px;line-height:1.7;">
+      <div style="color:var(--gold);font-weight:600;margin-bottom:8px;">Hoe werkt dit?</div>
+      <ol style="padding-left:18px;color:var(--text-muted);">
+        <li>Maak een Google Sheet aan en open <strong style="color:var(--white)">Extensies → Apps Script</strong></li>
+        <li>Plak het Apps Script (zie hieronder) en klik <strong style="color:var(--white)">Implementeren → Nieuwe implementatie</strong></li>
+        <li>Kies type: <strong style="color:var(--white)">Web-app</strong>, uitvoeren als: <strong style="color:var(--white)">Ik</strong>, toegang: <strong style="color:var(--white)">Iedereen</strong></li>
+        <li>Kopieer de gegenereerde <strong style="color:var(--white)">Web App URL</strong> en plak die hieronder</li>
+        <li>Upload dit HTML-bestand naar GitHub Pages en deel de URL met je collega's</li>
+      </ol>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Web App URL (van Google Apps Script)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <input type="text" id="inp-script-url" placeholder="https://script.google.com/macros/s/…/exec"
+          style="background:var(--navy-light);border:1px solid var(--border);color:var(--white);padding:8px 12px;border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;outline:none;flex:1;min-width:300px;">
+        <button class="btn-primary" onclick="slaScriptUrlOp()">Opslaan & verbinden</button>
+      </div>
+      <div id="sync-status-groot" style="margin-top:8px;font-size:12px;color:var(--text-muted);"></div>
+    </div>
+
+    <div>
+      <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Apps Script — kopieer dit naar Google Apps Script</div>
+      <div style="position:relative;">
+        <button onclick="kopieerScript()" style="position:absolute;top:8px;right:8px;background:var(--navy);border:1px solid var(--border);color:var(--gold);padding:4px 10px;border-radius:5px;font-family:'Inter',sans-serif;font-size:11px;cursor:pointer;z-index:1;">Kopieer</button>
+        <pre id="apps-script-code" style="background:var(--navy);border:1px solid var(--border);border-radius:8px;padding:16px;padding-right:80px;font-size:11px;color:#a8c7fa;overflow-x:auto;white-space:pre;font-family:'Courier New',monospace;line-height:1.5;"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
 </main>
 <script>
 const MEDEWERKERS = ['Cennet','Dennis','Gerjan','Iris','Melvin','Mike','Natasja','René','Thom'];
@@ -274,7 +443,67 @@ let selectedTrendMetric = 'trans';
 let selectedHistId = null;
 
 // ===== INIT =====
+// ===== GOOGLE SHEETS SYNC =====
+// Plak hier je Apps Script Web App URL na het instellen:
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzRjgnWXiOwyC8vIyStQU0NDs-jkyKiuHhOvMSlKyin1Atk-rl-xCuAWCyHuw6_2OLb/exec';
+
+function toonSyncStatus(tekst, kleur='var(--text-muted)'){
+  const el = document.getElementById('sync-status');
+  if(el){ el.textContent = tekst; el.style.color = kleur; }
+}
+
+async function laadVanSheets(){
+  if(!SCRIPT_URL){ toonSyncStatus('⚠ Geen Script URL ingesteld','var(--gold)'); return; }
+  toonSyncStatus('⟳ Laden uit Google Sheets…','var(--gold)');
+  try {
+    const r = await fetch(SCRIPT_URL + '?actie=laden', {method:'GET'});
+    const data = await r.json();
+    if(data.metingen) metingen = data.metingen;
+    if(data.normen){ normen = data.normen; updateNormUI(); }
+    // Ook lokaal cachen
+    localStorage.setItem('bb_metingen2', JSON.stringify(metingen));
+    localStorage.setItem('bb_normen', JSON.stringify(normen));
+    toonSyncStatus('✓ Gesynchroniseerd — ' + new Date().toLocaleTimeString('nl-NL'),'var(--green)');
+    buildInvoerTable();
+    updateVorigeInfo();
+  } catch(e){
+    toonSyncStatus('✗ Kan niet laden — controleer Script URL','var(--red)');
+    console.error(e);
+  }
+}
+
+async function slaOpInSheets(){
+  if(!SCRIPT_URL){ toonSyncStatus('⚠ Geen Script URL — lokaal opgeslagen','var(--gold)'); return false; }
+  toonSyncStatus('⟳ Opslaan in Google Sheets…','var(--gold)');
+  try {
+    const r = await fetch(SCRIPT_URL, {
+      method:'POST',
+      body: JSON.stringify({actie:'opslaan', metingen, normen}),
+    });
+    const data = await r.json();
+    if(data.ok){
+      toonSyncStatus('✓ Opgeslagen in Google Sheets — ' + new Date().toLocaleTimeString('nl-NL'),'var(--green)');
+      return true;
+    } else {
+      toonSyncStatus('✗ Fout bij opslaan: ' + (data.fout||'onbekend'),'var(--red)');
+      return false;
+    }
+  } catch(e){
+    toonSyncStatus('✗ Verbindingsfout — lokaal opgeslagen','var(--red)');
+    console.error(e);
+    return false;
+  }
+}
+
+function slaScriptUrlOp(){
+  const url = document.getElementById('inp-script-url').value.trim();
+  if(!url){ alert('Vul een geldige URL in.'); return; }
+  localStorage.setItem('bb_script_url', url);
+  location.reload();
+}
+
 function init(){
+  // Eerst lokale cache laden (snelle start)
   const sn = localStorage.getItem('bb_normen');
   if(sn) normen = JSON.parse(sn);
   const sm = localStorage.getItem('bb_metingen2');
@@ -286,6 +515,14 @@ function init(){
   updateNormUI();
   buildInvoerTable();
   suggestLabel();
+
+  // Script URL tonen in instellingen
+  const urlInp = document.getElementById('inp-script-url');
+  if(urlInp) urlInp.value = localStorage.getItem('bb_script_url')||'';
+
+  // Dan live laden vanuit Sheets
+  if(localStorage.getItem('bb_script_url')) laadVanSheets();
+  else toonSyncStatus('⚠ Stel eerst de Google Script URL in via het tabblad Instellingen','var(--gold)');
 }
 
 function getNorm(metric, btwNorm){
@@ -437,7 +674,10 @@ function saveMeting(){
   });
   const id = Date.now().toString();
   metingen.push({id,datum,label,type:currentType,btwNorm,medewerkers});
+  // Lokaal cachen
   localStorage.setItem('bb_metingen2', JSON.stringify(metingen));
+  // Naar Sheets
+  slaOpInSheets();
   const msg = document.getElementById('save-msg');
   msg.style.display='inline'; setTimeout(()=>msg.style.display='none',2500);
   updateVorigeInfo();
@@ -454,6 +694,7 @@ function saveNormen(){
   };
   localStorage.setItem('bb_normen',JSON.stringify(normen));
   updateNormUI();
+  slaOpInSheets();
   const msg=document.getElementById('save-msg-normen');
   msg.style.display='inline'; setTimeout(()=>msg.style.display='none',2500);
 }
@@ -743,6 +984,318 @@ function showTab(name, btn){
   if(name==='dashboard') renderDashboard();
   if(name==='trend') renderTrend();
   if(name==='structureel') renderStructureel();
+  if(name==='rapporten') renderRapporten();
+}
+
+// ===== EXPORT / IMPORT =====
+function exportData(){
+  const payload = {
+    versie: 2,
+    exportDatum: new Date().toISOString().slice(0,10),
+    exportDoor: 'BB Tracker',
+    normen,
+    metingen
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `BB_Tracker_data_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const payload = JSON.parse(e.target.result);
+      if(!payload.metingen) throw new Error('Ongeldig bestand');
+
+      // Samenvoegen: bestaande metingen + nieuwe, duplicaten op id overslaan
+      const bestaandeIds = new Set(metingen.map(m=>m.id));
+      let nieuw = 0;
+      payload.metingen.forEach(m=>{
+        if(!bestaandeIds.has(m.id)){ metingen.push(m); nieuw++; }
+      });
+
+      // Normen overnemen als ze er in zitten
+      if(payload.normen) {
+        normen = payload.normen;
+        localStorage.setItem('bb_normen', JSON.stringify(normen));
+        updateNormUI();
+      }
+
+      localStorage.setItem('bb_metingen2', JSON.stringify(metingen));
+      event.target.value = '';
+
+      const totaal = payload.metingen.length;
+      const bestaand = totaal - nieuw;
+      alert(`✓ Import geslaagd\n\n${nieuw} nieuwe meting(en) toegevoegd\n${bestaand} al aanwezig (overgeslagen)\n\nTotaal: ${metingen.length} meting(en) in de tracker`);
+    } catch(err) {
+      alert('Fout bij importeren: ' + err.message + '\n\nZorg dat je een geldig BB Tracker .json bestand gebruikt.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ===== RAPPORTEN =====
+function renderRapporten(){
+  const sel = document.getElementById('rapport-meting-select');
+  const content = document.getElementById('rapporten-content');
+
+  // Dropdown vullen
+  if(metingen.length===0){
+    sel.innerHTML='<option>Geen metingen</option>';
+    content.innerHTML='<div class="empty-state"><div class="icon">📄</div>Nog geen metingen beschikbaar.</div>';
+    return;
+  }
+  const sorted = [...metingen].sort((a,b)=>b.datum.localeCompare(a.datum)||b.id.localeCompare(a.id));
+  const currentVal = sel.value;
+  sel.innerHTML = sorted.map(m=>`<option value="${m.id}">${m.type==='week'?'🟢':'🟡'} ${m.label} (${m.datum})</option>`).join('');
+  if(currentVal && sorted.find(m=>m.id===currentVal)) sel.value = currentVal;
+
+  const metingId = sel.value;
+  const meting = metingen.find(m=>m.id===metingId);
+  if(!meting){ content.innerHTML=''; return; }
+
+  // Vorige meting voor vergelijking
+  const allSorted = [...metingen].sort((a,b)=>a.datum.localeCompare(b.datum)||a.id.localeCompare(b.id));
+  const metingIdx = allSorted.findIndex(m=>m.id===metingId);
+  const prevMeting = metingIdx>0 ? allSorted[metingIdx-1] : null;
+
+  // Alle metingen van deze persoon voor sparkline
+  const ICONS = { trans:'📋', vragen:'❓', radar:'📌', kwal:'✅', btw:'🧾' };
+  const btwNorm = meting.btwNorm||0;
+
+  const rapporten = MEDEWERKERS.map(naam=>{
+    const md = meting.medewerkers[naam]||{};
+    const prevMd = prevMeting ? (prevMeting.medewerkers[naam]||{}) : null;
+    const hasSome = METRICS.some(metric=>md[metric]!=null);
+
+    // Metrics kaarten
+    const metricKaarten = METRICS.map((metric,i)=>{
+      const v = md[metric];
+      const norm = getNorm(metric, btwNorm);
+      if(v===null||v===undefined) return `<div class="rapport-metric-kaart">
+        <div class="rmk-icon">${ICONS[metric]}</div>
+        <div class="rmk-label">${M_LABELS[i]}</div>
+        <div class="rmk-waarde" style="color:#243450">—</div>
+        <div class="rmk-norm">norm ≤ ${norm||'—'}</div>
+      </div>`;
+
+      const isOver = norm>0 && v>norm;
+      const isWarn = norm>0 && v===norm;
+      const kleur = isOver ? 'rood' : isWarn ? 'goud' : 'groen';
+      const pct = norm>0 ? Math.min(100,(v/norm)*100) : 0;
+      const barColor = isOver ? '#e05252' : isWarn ? '#c9a84c' : '#4caf7d';
+
+      // Verschil tov vorige
+      let diffHtml = '';
+      if(prevMd && prevMd[metric]!=null){
+        const d = v - prevMd[metric];
+        if(d<0) diffHtml=`<span class="rmk-badge" style="color:#4caf7d">↓${Math.abs(d)}</span>`;
+        else if(d>0) diffHtml=`<span class="rmk-badge" style="color:#e05252">↑${d}</span>`;
+        else diffHtml=`<span class="rmk-badge" style="color:#7a94b0">→</span>`;
+      }
+
+      return `<div class="rapport-metric-kaart ${kleur}">
+        ${diffHtml}
+        <div class="rmk-icon">${ICONS[metric]}</div>
+        <div class="rmk-label">${M_LABELS[i]}</div>
+        <div class="rmk-waarde ${kleur}">${v}</div>
+        <div class="rmk-norm">norm ≤ ${norm||'—'}</div>
+        <div class="rapport-bar-wrap"><div class="rapport-bar" style="width:${pct}%;background:${barColor}"></div></div>
+      </div>`;
+    }).join('');
+
+    // Conclusie tekst
+    const overMetrics = METRICS.filter(metric=>{ const v=md[metric]; const n=getNorm(metric,btwNorm); return v!=null&&n>0&&v>n; });
+    const binnenMetrics = METRICS.filter(metric=>{ const v=md[metric]; const n=getNorm(metric,btwNorm); return v!=null&&n>0&&v<=n; });
+    let conclusieTekst = '';
+    if(!hasSome){
+      conclusieTekst = 'Geen gegevens beschikbaar voor deze meting.';
+    } else if(overMetrics.length===0){
+      conclusieTekst = `<strong>Alle onderdelen binnen norm.</strong> Goed ritme — vasthouden en overzicht bewaken.`;
+    } else {
+      const overNamen = overMetrics.map(m=>M_LABELS[METRICS.indexOf(m)]).join(', ');
+      const topMetric = overMetrics[0];
+      const topV = md[topMetric];
+      const topN = getNorm(topMetric, btwNorm);
+      const topOver = topV - topN;
+      conclusieTekst = `<strong>Achterstand zichtbaar op: ${overNamen}.</strong> Eerste prioriteit: ${M_LABELS[METRICS.indexOf(topMetric)]} terugbrengen (${topV} → norm ≤ ${topN}, verschil: ${topOver}).`;
+    }
+
+    // Status
+    const anyOver = overMetrics.length > 0;
+    const statusKleur = !hasSome ? '#7a94b0' : anyOver ? '#e05252' : '#4caf7d';
+    const statusBg = !hasSome ? '#243450' : anyOver ? '#2a1515' : '#0f2a1c';
+    const statusBorder = !hasSome ? '#243450' : anyOver ? '#e05252' : '#4caf7d';
+    const statusTekst = !hasSome ? '—' : anyOver ? 'Achterstand zichtbaar' : 'Binnen norm';
+
+    // Mini sparkline SVG voor alle weekmetingen van deze persoon
+    const weekMets = [...metingen].filter(mt=>mt.type==='week').sort((a,b)=>a.datum.localeCompare(b.datum));
+    let sparkHtml = '';
+    if(weekMets.length>=2){
+      const W=320,H=60,PAD={t:8,r:8,b:20,l:30};
+      const gW=W-PAD.l-PAD.r, gH=H-PAD.t-PAD.b;
+      const n=weekMets.length;
+      // Toon alleen transacties als voorbeeld in sparkline
+      const metric='trans';
+      const vals = weekMets.map(mt=>mt.medewerkers[naam]?.[metric]??null);
+      const maxV = Math.max(normen.trans*1.2, ...vals.filter(v=>v!=null));
+      const xOf=i=>PAD.l+(n>1?i*gW/(n-1):gW/2);
+      const yOf=v=>PAD.t+gH-(v/maxV)*gH;
+      let path=''; let pts='';
+      vals.forEach((v,i)=>{ if(v==null)return; path+=path?` L${xOf(i)},${yOf(v)}`:`M${xOf(i)},${yOf(v)}`; const c=v>normen.trans?'#e05252':'#4caf7d'; pts+=`<circle cx="${xOf(i)}" cy="${yOf(v)}" r="3" fill="${c}"/>`; });
+      const ny=yOf(normen.trans);
+      sparkHtml=`<div class="rapport-sparkline-wrap">
+        <div class="rapport-sparkline-titel">Transacties trend (weekstarts)</div>
+        <svg viewBox="0 0 ${W} ${H}" width="100%" xmlns="http://www.w3.org/2000/svg" style="background:#0d1b2a;border-radius:6px">
+          <line x1="${PAD.l}" y1="${ny}" x2="${PAD.l+gW}" y2="${ny}" stroke="#e05252" stroke-width="1" stroke-dasharray="4,3" opacity="0.5"/>
+          <text x="${PAD.l+2}" y="${ny-2}" fill="#e05252" font-size="8" font-family="Inter,sans-serif">norm</text>
+          ${path?`<path d="${path}" fill="none" stroke="#5b9bd5" stroke-width="1.5"/>`:''}
+          ${pts}
+          ${weekMets.map((mt,i)=>`<text x="${xOf(i)}" y="${H-4}" text-anchor="middle" fill="#7a94b0" font-size="7" font-family="Inter,sans-serif">${mt.datum.slice(5)}</text>`).join('')}
+        </svg>
+      </div>`;
+    }
+
+    return `<div class="rapport-persoon" id="rapport-${naam.replace(/[^a-z]/gi,'_')}">
+      <div class="rapport-header">
+        <div>
+          <div class="rapport-naam">${naam}</div>
+          <div class="rapport-meta">${meting.label} · ${meting.datum}${prevMeting?` · vergelijking: ${prevMeting.label}`:''}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="rapport-status-groot" style="background:${statusBg};color:${statusKleur};border:1.5px solid ${statusBorder}">${statusTekst}</span>
+          <button class="rapport-print-btn" onclick="printRapport('${naam.replace(/[^a-z]/gi,'_')}')">🖨️ Print</button>
+        </div>
+      </div>
+      <div class="rapport-body">
+        <div class="rapport-metrics-grid">${metricKaarten}</div>
+        <div class="rapport-conclusie">${conclusieTekst}</div>
+        ${sparkHtml}
+      </div>
+      <div class="rapport-footer-bb">
+        <span>Buro Burmanje — Werkvoorraad Tracker</span>
+        <span>${meting.datum}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  content.innerHTML = rapporten;
+}
+
+function printRapport(naamId){
+  // Verberg alle andere rapporten tijdelijk
+  document.querySelectorAll('.rapport-persoon').forEach(el=>{
+    el.style.display = el.id==='rapport-'+naamId ? '' : 'none';
+  });
+  window.print();
+  document.querySelectorAll('.rapport-persoon').forEach(el=>el.style.display='');
+}
+
+function printAlleRapporten(){
+  window.print();
+}
+
+// ===== INSTELLINGEN =====
+const APPS_SCRIPT_CODE = `// BB Werkvoorraad Tracker — Google Apps Script
+// Plak dit in: Google Sheet → Extensies → Apps Script
+
+const SHEET_NAAM = 'BB_Data';
+
+function doGet(e) { return behandelVerzoek(e); }
+function doPost(e) { return behandelVerzoek(e); }
+
+function behandelVerzoek(e) {
+  const sheet = getOfMaakSheet();
+  try {
+    if (e.parameter && e.parameter.actie === 'laden') {
+      return jsonAntwoord(laadData(sheet));
+    }
+    const body = JSON.parse(e.postData.contents);
+    if (body.actie === 'opslaan') {
+      slaOpData(sheet, body);
+      return jsonAntwoord({ ok: true });
+    }
+    return jsonAntwoord({ fout: 'Onbekende actie' });
+  } catch(err) {
+    return jsonAntwoord({ fout: err.message });
+  }
+}
+
+function getOfMaakSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_NAAM);
+  if (!sheet) { sheet = ss.insertSheet(SHEET_NAAM); sheet.getRange('A1').setValue('{}'); }
+  return sheet;
+}
+
+function laadData(sheet) {
+  const waarde = sheet.getRange('A1').getValue();
+  if (!waarde) return { metingen: [], normen: {} };
+  return JSON.parse(waarde);
+}
+
+function slaOpData(sheet, body) {
+  sheet.getRange('A1').setValue(JSON.stringify({ metingen: body.metingen || [], normen: body.normen || {} }));
+  maakLeesbareTabel(body);
+}
+
+function maakLeesbareTabel(body) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let overzicht = ss.getSheetByName('Overzicht');
+  if (!overzicht) overzicht = ss.insertSheet('Overzicht');
+  overzicht.clearContents();
+  const headers = ['Datum','Label','Type','Medewerker','Transacties','Vragen','Taken Radar','Kwal.controls','BTW','BTW-norm'];
+  overzicht.getRange(1,1,1,headers.length).setValues([headers]);
+  overzicht.getRange(1,1,1,headers.length).setBackground('#162436').setFontColor('#c9a84c').setFontWeight('bold');
+  const rijen = [];
+  const medewerkers = ['Cennet','Dennis','Gerjan','Iris','Melvin','Mike','Natasja','René','Thom'];
+  (body.metingen||[]).forEach(m=>{
+    medewerkers.forEach(naam=>{
+      const md = m.medewerkers[naam]||{};
+      rijen.push([m.datum,m.label,m.type==='week'?'Weekstart':'Check',naam,md.trans??'',md.vragen??'',md.radar??'',md.kwal??'',md.btw??'',m.btwNorm||'']);
+    });
+  });
+  if(rijen.length>0) overzicht.getRange(2,1,rijen.length,headers.length).setValues(rijen);
+}
+
+function jsonAntwoord(data) {
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}`;
+
+function kopieerScript(){
+  navigator.clipboard.writeText(APPS_SCRIPT_CODE).then(()=>{
+    const btn = event.target;
+    btn.textContent='✓ Gekopieerd'; btn.style.color='var(--green)';
+    setTimeout(()=>{ btn.textContent='Kopieer'; btn.style.color='var(--gold)'; },2000);
+  });
+}
+
+function renderInstellingen(){
+  const el = document.getElementById('apps-script-code');
+  if(el) el.textContent = APPS_SCRIPT_CODE;
+  const urlInp = document.getElementById('inp-script-url');
+  if(urlInp) urlInp.value = localStorage.getItem('bb_script_url')||'';
+}
+
+// ===== NAVIGATIE =====
+function showTab(name, btn){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='historie') renderHistorie();
+  if(name==='dashboard') renderDashboard();
+  if(name==='trend') renderTrend();
+  if(name==='structureel') renderStructureel();
+  if(name==='rapporten') renderRapporten();
+  if(name==='instellingen') renderInstellingen();
 }
 
 init();
