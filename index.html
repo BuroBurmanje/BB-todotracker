@@ -749,6 +749,7 @@ function deleteMeting(id, e){
   metingen = metingen.filter(m=>m.id!==id);
   localStorage.setItem('bb_metingen2',JSON.stringify(metingen));
   if(selectedHistId===id) selectedHistId=null;
+  slaOpInSheets();
   renderHistorie();
 }
 
