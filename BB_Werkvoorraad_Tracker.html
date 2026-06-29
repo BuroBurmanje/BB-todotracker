@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BB Werkvoorraad Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  :root {
+    --navy:#0d1b2a; --navy-mid:#162436; --navy-light:#1e3148;
+    --gold:#c9a84c; --gold-light:#e8c97a;
+    --white:#f0f4f8; --red:#e05252; --red-bg:#2a1515;
+    --green:#4caf7d; --green-bg:#0f2a1c;
+    --border:#243450; --text-muted:#7a94b0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--navy);color:var(--white);font-family:'Inter',sans-serif;font-size:14px;min-height:100vh;}
+
+  header{background:var(--navy-mid);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;flex-wrap:wrap;}
+  .bb-logo{width:38px;height:38px;border:2px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;letter-spacing:1px;flex-shrink:0;}
+  header h1{font-size:15px;font-weight:600;flex:1;} header h1 span{color:var(--gold);}
+  .nav-tabs{display:flex;gap:4px;flex-wrap:wrap;}
+  .nav-tab{background:none;border:1px solid var(--border);color:var(--text-muted);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'Inter',sans-serif;transition:all .15s;}
+  .nav-tab.active,.nav-tab:hover{background:var(--navy-light);color:var(--gold);border-color:var(--gold);}
+
+  main{padding:20px;max-width:1150px;margin:0 auto;}
+  .tab-content{display:none;} .tab-content.active{display:block;}
+
+  .card{background:var(--navy-mid);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:18px;}
+  .card-title{font-size:13px;font-weight:600;color:var(--gold);margin-bottom:14px;}
+
+  /* TYPE BADGE */
+  .type-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+  .type-btn{padding:6px 16px;border-radius:20px;border:1px solid var(--border);background:var(--navy-light);color:var(--text-muted);font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .15s;font-weight:500;}
+  .type-btn.active-week{background:#0f2a1c;color:var(--green);border-color:var(--green);}
+  .type-btn.active-check{background:#1a1500;color:var(--gold);border-color:var(--gold);}
+  .type-label{font-size:11px;color:var(--text-muted);font-weight:500;}
+
+  /* META ROW */
+  .meta-row{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+  .meta-row label{font-size:12px;color:var(--text-muted);font-weight:500;white-space:nowrap;}
+  .meta-row input,.meta-row select{background:var(--navy-light);border:1px solid var(--border);color:var(--white);padding:6px 10px;border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;outline:none;}
+  .meta-row input:focus,.meta-row select:focus{border-color:var(--gold);}
+  .meta-row input[type=text]{width:180px;}
+  .meta-row input[type=number]{width:80px;}
+
+  /* INVOER TABEL */
+  .invoer-table{width:100%;border-collapse:collapse;}
+  .invoer-table th{text-align:left;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);padding:8px 8px;border-bottom:1px solid var(--border);}
+  .invoer-table td{padding:5px 5px;border-bottom:1px solid var(--border);}
+  .invoer-table tr:last-child td{border-bottom:none;}
+  .med-naam{font-weight:600;font-size:13px;padding:5px 8px;min-width:70px;}
+
+  .num-input{background:var(--navy-light);border:1px solid var(--border);color:var(--white);padding:5px 6px;border-radius:6px;width:72px;font-family:'Inter',sans-serif;font-size:13px;text-align:center;outline:none;transition:border-color .15s;}
+  .num-input:focus{border-color:var(--gold);}
+  .num-input.over-norm{border-color:var(--red);background:var(--red-bg);color:#ff8a8a;}
+  .num-input.op-norm{border-color:var(--gold);}
+
+  /* VERSCHIL CEL */
+  .diff-cell{font-size:12px;font-weight:700;text-align:center;width:50px;}
+  .diff-down{color:var(--green);}
+  .diff-up{color:var(--red);}
+  .diff-same{color:var(--text-muted);}
+
+  .status-badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+  .status-ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green);}
+  .status-red{background:var(--red-bg);color:var(--red);border:1px solid var(--red);}
+  .status-warn{background:#2a200f;color:var(--gold);border:1px solid var(--gold);}
+
+  .btn-primary{background:var(--gold);color:var(--navy);border:none;padding:9px 22px;border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s;}
+  .btn-primary:hover{background:var(--gold-light);}
+  .btn-secondary{background:var(--navy-light);color:var(--white);border:1px solid var(--border);padding:7px 16px;border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;}
+  .btn-secondary:hover{border-color:var(--gold);color:var(--gold);}
+  .btn-danger{background:var(--red-bg);color:var(--red);border:1px solid var(--red);padding:5px 12px;border-radius:6px;font-family:'Inter',sans-serif;font-size:12px;cursor:pointer;}
+  .btn-row{display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap;}
+  .save-msg{font-size:12px;color:var(--green);display:none;}
+
+  /* HISTORIE LIJST */
+  .hist-list{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+  .hist-item{display:flex;align-items:center;gap:10px;background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;transition:all .15s;}
+  .hist-item:hover,.hist-item.selected{border-color:var(--gold);background:var(--navy);}
+  .hist-item .hi-label{font-weight:600;font-size:13px;flex:1;}
+  .hist-item .hi-date{font-size:11px;color:var(--text-muted);}
+  .hist-item .hi-type{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:10px;}
+  .hi-type-week{background:var(--green-bg);color:var(--green);border:1px solid var(--green);}
+  .hi-type-check{background:#1a1500;color:var(--gold);border:1px solid var(--gold);}
+
+  /* DASHBOARD */
+  .dash-table{width:100%;border-collapse:collapse;}
+  .dash-table th{text-align:center;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);padding:9px 6px;border-bottom:1px solid var(--border);}
+  .dash-table th:first-child{text-align:left;}
+  .dash-table td{text-align:center;padding:8px 6px;border-bottom:1px solid var(--border);font-size:13px;}
+  .dash-table td:first-child{text-align:left;font-weight:600;}
+  .dash-table tr:last-child td{border-bottom:none;}
+  .cell-red{color:var(--red);font-weight:700;} .cell-ok{color:var(--green);} .cell-empty{color:var(--border);}
+
+  /* TREND / GRAFIEK */
+  .trend-medewerker-select{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+  .med-pill{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--navy-light);color:var(--text-muted);font-size:12px;cursor:pointer;transition:all .15s;}
+  .med-pill.active{border-color:var(--gold);color:var(--gold);background:var(--navy);}
+
+  .grafiek-wrap{overflow-x:auto;margin-bottom:20px;}
+  .grafiek-svg{display:block;}
+
+  .trend-diff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:16px;}
+  .trend-diff-card{background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:14px;}
+  .tdc-name{font-weight:700;font-size:13px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+  .tdc-metric{display:grid;grid-template-columns:110px 1fr 36px 50px;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;}
+  .tdc-mn{color:var(--text-muted);}
+  .bar-wrap{background:var(--navy);border-radius:3px;height:5px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:3px;}
+  .bar-ok{background:var(--green);} .bar-over{background:var(--red);} .bar-warn{background:var(--gold);}
+  .tdc-val{text-align:right;font-weight:600;}
+  .val-ok{color:var(--green);} .val-over{color:var(--red);} .val-warn{color:var(--gold);}
+  .tdc-diff{text-align:right;font-size:11px;font-weight:700;}
+
+  /* STRUCTUREEL */
+  .struct-table{width:100%;border-collapse:collapse;}
+  .struct-table th{text-align:left;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);padding:9px 10px;border-bottom:1px solid var(--border);}
+  .struct-table td{padding:9px 10px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+  .struct-table tr:last-child td{border-bottom:none;}
+  .week-dots{display:flex;gap:4px;}
+  .week-dot{width:13px;height:13px;border-radius:50%;display:inline-block;}
+  .dot-red{background:var(--red);} .dot-green{background:var(--green);} .dot-empty{background:var(--navy-light);border:1px solid var(--border);}
+
+  /* NORMEN */
+  .normen-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;}
+  .norm-item{background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:12px;}
+  .norm-item label{font-size:10px;color:var(--text-muted);display:block;margin-bottom:5px;font-weight:500;text-transform:uppercase;letter-spacing:1px;}
+  .norm-item input{background:var(--navy);border:1px solid var(--border);color:var(--gold);padding:5px 8px;border-radius:5px;width:100%;font-family:'Inter',sans-serif;font-size:16px;font-weight:700;outline:none;text-align:center;}
+  .norm-item input:focus{border-color:var(--gold);}
+
+  .empty-state{text-align:center;padding:36px;color:var(--text-muted);font-size:13px;}
+  .empty-state .icon{font-size:28px;margin-bottom:10px;}
+
+  @media(max-width:600px){
+    main{padding:10px;} header{padding:8px 12px;} header h1{font-size:13px;}
+    .nav-tab{padding:4px 8px;font-size:11px;} .num-input{width:58px;font-size:12px;} .med-naam{font-size:12px;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="bb-logo">BB</div>
+  <h1>Buro Burmanje — <span>Werkvoorraad Tracker</span></h1>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="showTab('invoer',this)">Invoer</button>
+    <button class="nav-tab" onclick="showTab('historie',this)">Historie</button>
+    <button class="nav-tab" onclick="showTab('dashboard',this)">Dashboard</button>
+    <button class="nav-tab" onclick="showTab('trend',this)">Trend & Grafiek</button>
+    <button class="nav-tab" onclick="showTab('structureel',this)">Structureel</button>
+    <button class="nav-tab" onclick="showTab('normen',this)">Normen</button>
+  </nav>
+</header>
+<main>
+
+<!-- INVOER -->
+<div id="tab-invoer" class="tab-content active">
+  <div class="card">
+    <div class="card-title">📋 Nieuwe meting invoeren</div>
+
+    <div class="type-row">
+      <span class="type-label">Type meting:</span>
+      <button class="type-btn active-week" id="btn-week" onclick="setType('week')">🟢 Weekstart (maandag)</button>
+      <button class="type-btn" id="btn-check" onclick="setType('check')">🟡 Tussentijdse check</button>
+    </div>
+
+    <div class="meta-row">
+      <label>Datum:</label>
+      <input type="date" id="inp-datum">
+      <label>Label:</label>
+      <input type="text" id="inp-label" placeholder="bv. Maandag start W26">
+      <label>BTW-norm week:</label>
+      <input type="number" id="inp-btw-norm" placeholder="bv. 5" style="width:70px">
+    </div>
+
+    <div id="vorige-info" style="display:none;background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text-muted);">
+      <span id="vorige-label"></span>
+    </div>
+
+    <table class="invoer-table">
+      <thead>
+        <tr>
+          <th>Medewerker</th>
+          <th>Transacties<br><small class="n-trans"></small></th>
+          <th>Vragen<br><small class="n-vragen"></small></th>
+          <th>Taken Radar<br><small class="n-radar"></small></th>
+          <th>Kwal.controls<br><small class="n-kwal"></small></th>
+          <th>BTW<br><small class="n-btw"></small></th>
+          <th id="diff-header" style="display:none">Verschil</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="invoer-body"></tbody>
+    </table>
+
+    <div class="btn-row">
+      <button class="btn-primary" onclick="saveMeting()">Meting opslaan</button>
+      <button class="btn-secondary" onclick="clearInvoer()">Leegmaken</button>
+      <span class="save-msg" id="save-msg">✓ Opgeslagen</span>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORIE -->
+<div id="tab-historie" class="tab-content">
+  <div class="card">
+    <div class="card-title">📂 Alle metingen</div>
+    <div id="hist-list-el"></div>
+    <div id="hist-detail"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="tab-dashboard" class="tab-content">
+  <div class="card">
+    <div class="card-title">📊 Dashboard — selecteer meting</div>
+    <div id="dash-pills" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;"></div>
+    <div id="dashboard-content"><div class="empty-state"><div class="icon">📭</div>Nog geen metingen opgeslagen.</div></div>
+  </div>
+</div>
+
+<!-- TREND -->
+<div id="tab-trend" class="tab-content">
+  <div class="card">
+    <div class="card-title">📈 Trend & Grafiek</div>
+    <div id="trend-metric-select" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;"></div>
+    <div id="grafiek-area"></div>
+    <hr style="border-color:var(--border);margin:18px 0;">
+    <div class="card-title" style="margin-bottom:10px;">🔄 Verschilkaarten — laatste vs vorige meting</div>
+    <div id="trend-diff-content"><div class="empty-state"><div class="icon">📈</div>Voeg minimaal 2 metingen toe.</div></div>
+  </div>
+</div>
+
+<!-- STRUCTUREEL -->
+<div id="tab-structureel" class="tab-content">
+  <div class="card">
+    <div class="card-title">🔍 Structureel overzicht — op basis van weekstartmetingen</div>
+    <div id="struct-content"><div class="empty-state"><div class="icon">🔍</div>Voeg minimaal 2 weekstartmetingen toe.</div></div>
+  </div>
+</div>
+
+<!-- NORMEN -->
+<div id="tab-normen" class="tab-content">
+  <div class="card">
+    <div class="card-title">⚙️ Normen aanpassen</div>
+    <div class="normen-grid">
+      <div class="norm-item"><label>Transacties</label><input type="number" id="norm-trans" value="350"></div>
+      <div class="norm-item"><label>Vragen</label><input type="number" id="norm-vragen" value="10"></div>
+      <div class="norm-item"><label>Taken Radar</label><input type="number" id="norm-radar" value="15"></div>
+      <div class="norm-item"><label>Kwaliteitscontroles</label><input type="number" id="norm-kwal" value="30"></div>
+      <div class="norm-item"><label>BTW-aangiftes</label><input type="number" id="norm-btw" placeholder="Wisselend per week"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="saveNormen()">Opslaan</button>
+      <span class="save-msg" id="save-msg-normen">✓ Normen opgeslagen</span>
+    </div>
+  </div>
+</div>
+
+</main>
+<script>
+const MEDEWERKERS = ['Cennet','Dennis','Gerjan','Iris','Melvin','Mike','Natasja','René','Thom'];
+const METRICS     = ['trans','vragen','radar','kwal','btw'];
+const M_LABELS    = ['Transacties','Vragen','Taken Radar','Kwal.controls','BTW'];
+const M_MAX_FACTOR= [1.5, 2.5, 4, 4, 5];
+
+let normen = {trans:350,vragen:10,radar:15,kwal:30,btw:0};
+// metingen = array van { id, datum, label, type:'week'|'check', btwNorm, medewerkers:{naam:{trans,vragen,radar,kwal,btw}} }
+let metingen = [];
+let currentType = 'week';
+let selectedDashId = null;
+let selectedTrendMetric = 'trans';
+let selectedHistId = null;
+
+// ===== INIT =====
+function init(){
+  const sn = localStorage.getItem('bb_normen');
+  if(sn) normen = JSON.parse(sn);
+  const sm = localStorage.getItem('bb_metingen2');
+  if(sm) metingen = JSON.parse(sm);
+
+  const now = new Date();
+  document.getElementById('inp-datum').value = now.toISOString().slice(0,10);
+  setType('week');
+  updateNormUI();
+  buildInvoerTable();
+  suggestLabel();
+}
+
+function getNorm(metric, btwNorm){
+  return metric==='btw' ? (btwNorm||normen.btw||0) : normen[metric];
+}
+
+function updateNormUI(){
+  document.getElementById('norm-trans').value = normen.trans;
+  document.getElementById('norm-vragen').value = normen.vragen;
+  document.getElementById('norm-radar').value = normen.radar;
+  document.getElementById('norm-kwal').value = normen.kwal;
+  document.getElementById('norm-btw').value = normen.btw||'';
+  document.querySelectorAll('.n-trans').forEach(e=>e.textContent='≤'+normen.trans);
+  document.querySelectorAll('.n-vragen').forEach(e=>e.textContent='≤'+normen.vragen);
+  document.querySelectorAll('.n-radar').forEach(e=>e.textContent='≤'+normen.radar);
+  document.querySelectorAll('.n-kwal').forEach(e=>e.textContent='≤'+normen.kwal);
+  document.querySelectorAll('.n-btw').forEach(e=>e.textContent='wisselend');
+}
+
+// ===== TYPE =====
+function setType(t){
+  currentType = t;
+  document.getElementById('btn-week').className = 'type-btn' + (t==='week'?' active-week':'');
+  document.getElementById('btn-check').className = 'type-btn' + (t==='check'?' active-check':'');
+  suggestLabel();
+  updateVorigeInfo();
+  const dh = document.getElementById('diff-header');
+  dh.style.display = t==='check' ? '' : 'none';
+  buildInvoerTable();
+}
+
+function suggestLabel(){
+  const d = new Date(document.getElementById('inp-datum').value+'T12:00:00');
+  const dagen = ['Zondag','Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag'];
+  const dag = dagen[d.getDay()];
+  const week = getWeekNr(d);
+  document.getElementById('inp-label').value = currentType==='week'
+    ? `Weekstart W${week}`
+    : `${dag} check W${week}`;
+}
+
+document.getElementById('inp-datum').addEventListener('change', suggestLabel);
+
+function getWeekNr(d){
+  const dt = new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  dt.setUTCDate(dt.getUTCDate()+4-(dt.getUTCDay()||7));
+  const ys = new Date(Date.UTC(dt.getUTCFullYear(),0,1));
+  return Math.ceil((((dt-ys)/86400000)+1)/7);
+}
+
+function updateVorigeInfo(){
+  const el = document.getElementById('vorige-info');
+  const lbl = document.getElementById('vorige-label');
+  if(currentType!=='check' || metingen.length===0){ el.style.display='none'; return; }
+  const prev = [...metingen].reverse()[0];
+  el.style.display = '';
+  lbl.textContent = `Vergelijking met vorige meting: "${prev.label}" (${prev.datum}) — verschilkolom toont ↓ gedaald / ↑ gestegen t.o.v. die meting.`;
+}
+
+// ===== INVOER TABEL =====
+function buildInvoerTable(){
+  const tbody = document.getElementById('invoer-body');
+  tbody.innerHTML = '';
+  const showDiff = currentType==='check' && metingen.length>0;
+  const prev = showDiff ? [...metingen].reverse()[0] : null;
+
+  MEDEWERKERS.forEach(m=>{
+    const tr = document.createElement('tr');
+    let diffCells = showDiff ? METRICS.map(metric=>`<td class="diff-cell" id="diff-${m}-${metric}">—</td>`).join('') : '';
+    tr.innerHTML = `<td class="med-naam">${m}</td>`
+      + METRICS.map(metric=>`<td><input class="num-input" type="number" min="0" id="inp-${m}-${metric}" placeholder="—" oninput="onInput(this,'${metric}','${m}')"></td>`).join('')
+      + diffCells
+      + `<td><span class="status-badge" id="status-${m}">—</span></td>`;
+    tbody.appendChild(tr);
+
+    // Vul vorige waarden in als referentie (placeholder)
+    if(prev){
+      METRICS.forEach(metric=>{
+        const v = prev.medewerkers[m]?.[metric];
+        const inp = document.getElementById(`inp-${m}-${metric}`);
+        if(v!==null&&v!==undefined) inp.placeholder = v;
+      });
+    }
+  });
+}
+
+function onInput(inp, metric, m){
+  const btwNorm = parseInt(document.getElementById('inp-btw-norm').value)||normen.btw||0;
+  const norm = getNorm(metric, btwNorm);
+  const val = parseInt(inp.value);
+  inp.classList.remove('over-norm','op-norm');
+  if(!isNaN(val)&&norm>0){
+    if(val>norm) inp.classList.add('over-norm');
+    else if(val===norm&&metric!=='btw') inp.classList.add('op-norm');
+  }
+  // Verschilkolom updaten
+  if(currentType==='check'&&metingen.length>0){
+    const prev = [...metingen].reverse()[0];
+    const prevVal = prev.medewerkers[m]?.[metric];
+    const diffEl = document.getElementById(`diff-${m}-${metric}`);
+    if(diffEl&&prevVal!==null&&prevVal!==undefined&&!isNaN(val)){
+      const d = val - prevVal;
+      if(d<0) { diffEl.textContent='↓'+Math.abs(d); diffEl.className='diff-cell diff-down'; }
+      else if(d>0) { diffEl.textContent='↑'+d; diffEl.className='diff-cell diff-up'; }
+      else { diffEl.textContent='→'; diffEl.className='diff-cell diff-same'; }
+    }
+  }
+  updateRowStatus(m, btwNorm);
+}
+
+function updateRowStatus(m, btwNorm){
+  let anyOver=false, anyFilled=false;
+  METRICS.forEach(metric=>{
+    const v = parseInt(document.getElementById(`inp-${m}-${metric}`).value);
+    if(!isNaN(v)) anyFilled=true;
+    const norm = getNorm(metric, btwNorm);
+    if(!isNaN(v)&&norm>0&&v>norm) anyOver=true;
+  });
+  const badge = document.getElementById(`status-${m}`);
+  if(!anyFilled){ badge.textContent='—'; badge.className='status-badge'; return; }
+  badge.textContent = anyOver ? 'Achterstand' : 'Binnen norm';
+  badge.className = 'status-badge '+(anyOver?'status-red':'status-ok');
+}
+
+function clearInvoer(){
+  MEDEWERKERS.forEach(m=>{
+    METRICS.forEach(metric=>{
+      const inp = document.getElementById(`inp-${m}-${metric}`);
+      if(inp){ inp.value=''; inp.classList.remove('over-norm','op-norm'); }
+      const d = document.getElementById(`diff-${m}-${metric}`);
+      if(d){ d.textContent='—'; d.className='diff-cell'; }
+    });
+    const b = document.getElementById(`status-${m}`);
+    if(b){ b.textContent='—'; b.className='status-badge'; }
+  });
+}
+
+function saveMeting(){
+  const datum = document.getElementById('inp-datum').value;
+  const label = document.getElementById('inp-label').value || datum;
+  const btwNorm = parseInt(document.getElementById('inp-btw-norm').value)||0;
+  const medewerkers = {};
+  MEDEWERKERS.forEach(m=>{
+    medewerkers[m]={};
+    METRICS.forEach(metric=>{
+      const v = document.getElementById(`inp-${m}-${metric}`).value;
+      medewerkers[m][metric] = v!=='' ? parseInt(v) : null;
+    });
+  });
+  const id = Date.now().toString();
+  metingen.push({id,datum,label,type:currentType,btwNorm,medewerkers});
+  localStorage.setItem('bb_metingen2', JSON.stringify(metingen));
+  const msg = document.getElementById('save-msg');
+  msg.style.display='inline'; setTimeout(()=>msg.style.display='none',2500);
+  updateVorigeInfo();
+}
+
+// ===== NORMEN =====
+function saveNormen(){
+  normen={
+    trans:parseInt(document.getElementById('norm-trans').value)||350,
+    vragen:parseInt(document.getElementById('norm-vragen').value)||10,
+    radar:parseInt(document.getElementById('norm-radar').value)||15,
+    kwal:parseInt(document.getElementById('norm-kwal').value)||30,
+    btw:parseInt(document.getElementById('norm-btw').value)||0,
+  };
+  localStorage.setItem('bb_normen',JSON.stringify(normen));
+  updateNormUI();
+  const msg=document.getElementById('save-msg-normen');
+  msg.style.display='inline'; setTimeout(()=>msg.style.display='none',2500);
+}
+
+// ===== HISTORIE =====
+function renderHistorie(){
+  const el = document.getElementById('hist-list-el');
+  const detail = document.getElementById('hist-detail');
+  if(metingen.length===0){ el.innerHTML='<div class="empty-state"><div class="icon">📂</div>Nog geen metingen.</div>'; detail.innerHTML=''; return; }
+  const sorted = [...metingen].reverse();
+  el.innerHTML = '<div class="hist-list">'
+    + sorted.map(m=>`<div class="hist-item ${m.id===selectedHistId?'selected':''}" onclick="showHistDetail('${m.id}')">
+        <span class="hi-type ${m.type==='week'?'hi-type-week':'hi-type-check'}">${m.type==='week'?'WEEK':'CHECK'}</span>
+        <span class="hi-label">${m.label}</span>
+        <span class="hi-date">${m.datum}</span>
+        <button class="btn-danger" onclick="deleteMeting('${m.id}',event)">✕</button>
+      </div>`).join('')
+    + '</div>';
+  if(selectedHistId) showHistDetailRender(selectedHistId);
+  else detail.innerHTML='';
+}
+
+function showHistDetail(id){ selectedHistId=id; renderHistorie(); }
+
+function showHistDetailRender(id){
+  const m = metingen.find(x=>x.id===id);
+  if(!m){ document.getElementById('hist-detail').innerHTML=''; return; }
+  const btwNorm = m.btwNorm||0;
+  const rows = MEDEWERKERS.map(med=>{
+    const md = m.medewerkers[med]||{};
+    return `<tr><td style="font-weight:600">${med}</td>`
+      + METRICS.map(metric=>{
+          const v = md[metric];
+          const norm = getNorm(metric,btwNorm);
+          const cls = v===null||v===undefined ? 'cell-empty' : (norm>0&&v>norm?'cell-red':'cell-ok');
+          return `<td class="${cls}" style="text-align:center">${v!==null&&v!==undefined?v:'—'}</td>`;
+        }).join('')
+      + '</tr>';
+  }).join('');
+  document.getElementById('hist-detail').innerHTML = `
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">${m.datum} · ${m.label} · BTW-norm: ${btwNorm||'—'}</div>
+      <table class="dash-table"><thead><tr>
+        <th>Medewerker</th>${M_LABELS.map(l=>`<th>${l}</th>`).join('')}
+      </tr></thead><tbody>${rows}</tbody></table>
+    </div>`;
+}
+
+function deleteMeting(id, e){
+  e.stopPropagation();
+  if(!confirm('Deze meting verwijderen?')) return;
+  metingen = metingen.filter(m=>m.id!==id);
+  localStorage.setItem('bb_metingen2',JSON.stringify(metingen));
+  if(selectedHistId===id) selectedHistId=null;
+  renderHistorie();
+}
+
+// ===== DASHBOARD =====
+function renderDashboard(){
+  const pills = document.getElementById('dash-pills');
+  const content = document.getElementById('dashboard-content');
+  if(metingen.length===0){ pills.innerHTML=''; content.innerHTML='<div class="empty-state"><div class="icon">📭</div>Nog geen metingen.</div>'; return; }
+  const sorted = [...metingen].reverse();
+  if(!selectedDashId||!metingen.find(x=>x.id===selectedDashId)) selectedDashId=sorted[0].id;
+  pills.innerHTML = sorted.map(m=>`<span class="med-pill ${m.id===selectedDashId?'active':''}" onclick="selectDash('${m.id}')">
+    ${m.type==='check'?'🟡':'🟢'} ${m.label} <small style="color:var(--text-muted)">${m.datum}</small>
+  </span>`).join('');
+  const meting = metingen.find(x=>x.id===selectedDashId);
+  const btwNorm = meting.btwNorm||0;
+  const rows = MEDEWERKERS.map(m=>{
+    const md = meting.medewerkers[m]||{};
+    const anyOver = METRICS.some(metric=>{ const v=md[metric]; const n=getNorm(metric,btwNorm); return v!==null&&v!==undefined&&n>0&&v>n; });
+    const allNull = METRICS.every(metric=>md[metric]===null||md[metric]===undefined);
+    const st = allNull ? '<span class="status-badge">—</span>' : anyOver ? '<span class="status-badge status-red">Achterstand</span>' : '<span class="status-badge status-ok">Op koers</span>';
+    return `<tr><td>${m}</td>${METRICS.map(metric=>{
+      const v=md[metric]; const n=getNorm(metric,btwNorm);
+      const cls=v===null||v===undefined?'cell-empty':(n>0&&v>n?'cell-red':'cell-ok');
+      return `<td class="${cls}">${v!==null&&v!==undefined?v:'—'}</td>`;
+    }).join('')}<td>${st}</td></tr>`;
+  }).join('');
+  const totals = METRICS.map(metric=>{
+    const s=MEDEWERKERS.reduce((a,m)=>{ const v=meting.medewerkers[m]?.[metric]; return a+(v!=null?v:0); },0);
+    return `<td style="font-weight:700;color:var(--gold)">${s}</td>`;
+  }).join('');
+  content.innerHTML=`<table class="dash-table"><thead><tr><th>Medewerker</th>${M_LABELS.map((l,i)=>`<th>${l}<br><small style="color:var(--border);font-weight:400">≤${i===4?(btwNorm||'—'):Object.values(normen)[i]}</small></th>`).join('')}<th>Status</th></tr></thead>
+    <tbody>${rows}<tr style="border-top:2px solid var(--border)"><td style="color:var(--text-muted);font-size:10px;font-weight:600">TOTAAL</td>${totals}<td></td></tr></tbody></table>`;
+}
+function selectDash(id){ selectedDashId=id; renderDashboard(); }
+
+// ===== TREND & GRAFIEK =====
+function renderTrend(){
+  const content = document.getElementById('trend-diff-content');
+  const grafArea = document.getElementById('grafiek-area');
+  const msel = document.getElementById('trend-metric-select');
+
+  if(metingen.length<1){ grafArea.innerHTML='<div class="empty-state"><div class="icon">📈</div>Voeg minimaal 2 metingen toe.</div>'; content.innerHTML=''; msel.innerHTML=''; return; }
+
+  // Metric knoppen
+  msel.innerHTML = METRICS.map((m,i)=>`<button class="med-pill ${m===selectedTrendMetric?'active':''}" onclick="selectTrendMetric('${m}')">${M_LABELS[i]}</button>`).join('');
+
+  // SVG grafiek
+  buildGrafiek(grafArea);
+
+  // Verschilkaarten
+  if(metingen.length<2){ content.innerHTML='<div class="empty-state"><div class="icon">🔄</div>Voeg een tweede meting toe voor verschilkaarten.</div>'; return; }
+
+  const sorted = [...metingen].sort((a,b)=>a.datum.localeCompare(b.datum)||a.id.localeCompare(b.id));
+  const last = sorted[sorted.length-1];
+  const prev = sorted[sorted.length-2];
+
+  const cards = MEDEWERKERS.map(m=>{
+    const lastBtw = last.btwNorm||0;
+    const metricsHtml = METRICS.map((metric,i)=>{
+      const lv = last.medewerkers[m]?.[metric];
+      const pv = prev.medewerkers[m]?.[metric];
+      if(lv===null||lv===undefined) return '';
+      const norm = getNorm(metric,lastBtw);
+      const maxBar = norm*(M_MAX_FACTOR[i]||2);
+      const pct = Math.min(100,(lv/maxBar)*100);
+      const isOver = norm>0&&lv>norm;
+      const barCls = isOver?'bar-over':'bar-ok';
+      const valCls = isOver?'val-over':'val-ok';
+      let diffHtml = '—';
+      if(pv!==null&&pv!==undefined){
+        const d=lv-pv;
+        if(d<0) diffHtml=`<span class="diff-down">↓${Math.abs(d)}</span>`;
+        else if(d>0) diffHtml=`<span class="diff-up">↑${d}</span>`;
+        else diffHtml=`<span class="diff-same">→</span>`;
+      }
+      return `<div class="tdc-metric">
+        <span class="tdc-mn">${M_LABELS[i]}</span>
+        <div class="bar-wrap"><div class="bar-fill ${barCls}" style="width:${pct}%"></div></div>
+        <span class="tdc-val ${valCls}">${lv}</span>
+        <span class="tdc-diff">${diffHtml}</span>
+      </div>`;
+    }).join('');
+
+    const btwNorm = last.btwNorm||0;
+    const anyOver = METRICS.some(metric=>{ const v=last.medewerkers[m]?.[metric]; const n=getNorm(metric,btwNorm); return v!=null&&n>0&&v>n; });
+    const st = anyOver?'<span class="status-badge status-red" style="font-size:10px">Achterstand</span>':'<span class="status-badge status-ok" style="font-size:10px">Op koers</span>';
+
+    return `<div class="trend-diff-card"><div class="tdc-name">${m}${st}</div>${metricsHtml}</div>`;
+  }).join('');
+
+  content.innerHTML=`<p style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Laatste: <strong style="color:var(--white)">${last.label}</strong> (${last.datum}) vs vorige: <strong style="color:var(--text-muted)">${prev.label}</strong> (${prev.datum})</p><div class="trend-diff-grid">${cards}</div>`;
+}
+
+function selectTrendMetric(m){ selectedTrendMetric=m; renderTrend(); }
+
+function buildGrafiek(container){
+  const sorted = [...metingen].sort((a,b)=>a.datum.localeCompare(b.datum)||a.id.localeCompare(b.id));
+  if(sorted.length<1){ container.innerHTML=''; return; }
+
+  const metric = selectedTrendMetric;
+  const mi = METRICS.indexOf(metric);
+  const norm = normen[metric];
+
+  // Verzamel alle waarden voor schaling
+  let maxVal = norm * 1.2;
+  sorted.forEach(meting=>{
+    MEDEWERKERS.forEach(m=>{ const v=meting.medewerkers[m]?.[metric]; if(v!=null&&v>maxVal) maxVal=v; });
+  });
+
+  const W=900, H=260, PAD={top:20,right:20,bottom:60,left:48};
+  const gW=W-PAD.left-PAD.right, gH=H-PAD.top-PAD.bottom;
+  const n=sorted.length;
+  const xStep = n>1 ? gW/(n-1) : gW/2;
+
+  const colors=['#4caf7d','#e05252','#c9a84c','#5b9bd5','#a78bfa','#f97316','#22d3ee','#fb7185','#84cc16'];
+
+  const xOf = i => PAD.left + (n>1 ? i*xStep : gW/2);
+  const yOf = v => PAD.top + gH - (v/maxVal)*gH;
+
+  // Lijnen per medewerker
+  let lines='', dots='', labels='';
+
+  MEDEWERKERS.forEach((m,mi2)=>{
+    const col=colors[mi2%colors.length];
+    let path='';
+    sorted.forEach((meting,i)=>{
+      const v=meting.medewerkers[m]?.[metric];
+      if(v===null||v===undefined) return;
+      const x=xOf(i), y=yOf(v);
+      path += path==='' ? `M${x},${y}` : ` L${x},${y}`;
+      dots+=`<circle cx="${x}" cy="${y}" r="4" fill="${col}" stroke="var(--navy-mid)" stroke-width="1.5">
+        <title>${m}: ${v} (${meting.label})</title></circle>`;
+    });
+    if(path) lines+=`<path d="${path}" fill="none" stroke="${col}" stroke-width="2" opacity="0.85"/>`;
+    // Label rechts
+    const lastMeting = [...sorted].reverse().find(mt=>mt.medewerkers[m]?.[metric]!=null);
+    if(lastMeting){
+      const li=sorted.indexOf(lastMeting);
+      const v=lastMeting.medewerkers[m][metric];
+      labels+=`<text x="${xOf(li)+6}" y="${yOf(v)+4}" fill="${col}" font-size="10" font-family="Inter,sans-serif">${m}</text>`;
+    }
+  });
+
+  // Norm lijn
+  const ny=yOf(norm);
+  const normLine=`<line x1="${PAD.left}" y1="${ny}" x2="${PAD.left+gW}" y2="${ny}" stroke="var(--red)" stroke-width="1" stroke-dasharray="6,3" opacity="0.6"/>
+    <text x="${PAD.left+4}" y="${ny-4}" fill="var(--red)" font-size="10" font-family="Inter,sans-serif">norm ${norm}</text>`;
+
+  // X-as labels
+  const xLabels = sorted.map((mt,i)=>`<text x="${xOf(i)}" y="${H-PAD.bottom+18}" text-anchor="middle" fill="var(--text-muted)" font-size="10" font-family="Inter,sans-serif">${mt.label.replace('Weekstart ','W').replace('start ','')}</text>
+    <text x="${xOf(i)}" y="${H-PAD.bottom+30}" text-anchor="middle" fill="var(--border)" font-size="9" font-family="Inter,sans-serif">${mt.type==='week'?'⬛':'◇'} ${mt.datum.slice(5)}</text>`).join('');
+
+  // Y-as
+  const yTicks=[0,Math.round(maxVal*0.25),Math.round(maxVal*0.5),Math.round(maxVal*0.75),Math.round(maxVal)];
+  const yAxis = yTicks.map(v=>`<line x1="${PAD.left-4}" y1="${yOf(v)}" x2="${PAD.left+gW}" y2="${yOf(v)}" stroke="var(--border)" stroke-width="0.5"/>
+    <text x="${PAD.left-8}" y="${yOf(v)+4}" text-anchor="end" fill="var(--text-muted)" font-size="10" font-family="Inter,sans-serif">${v}</text>`).join('');
+
+  container.innerHTML=`<div class="grafiek-wrap"><svg class="grafiek-svg" viewBox="0 0 ${W} ${H}" width="100%" xmlns="http://www.w3.org/2000/svg">
+    <rect width="${W}" height="${H}" fill="var(--navy-mid)" rx="8"/>
+    ${yAxis}${normLine}${lines}${dots}${labels}${xLabels}
+    <text x="${PAD.left}" y="14" fill="var(--gold)" font-size="11" font-weight="600" font-family="Inter,sans-serif">${M_LABELS[mi]} — alle medewerkers · ⬛=weekstart ◇=tussentijdse check</text>
+  </svg></div>`;
+}
+
+// ===== STRUCTUREEL =====
+function renderStructureel(){
+  const content = document.getElementById('struct-content');
+  const weekMetingen = metingen.filter(m=>m.type==='week').sort((a,b)=>a.datum.localeCompare(b.datum));
+  if(weekMetingen.length<2){ content.innerHTML='<div class="empty-state"><div class="icon">🔍</div>Voeg minimaal 2 weekstartmetingen toe voor structurele analyse.</div>'; return; }
+
+  const last4 = weekMetingen.slice(-4);
+
+  const rows = MEDEWERKERS.map(m=>{
+    let wekenOver=0;
+    const dots = last4.map(mt=>{
+      const md=mt.medewerkers[m]||{};
+      const btwNorm=mt.btwNorm||0;
+      const hasSome=METRICS.some(metric=>md[metric]!=null);
+      const isOver=METRICS.some(metric=>{ const v=md[metric]; const n=getNorm(metric,btwNorm); return v!=null&&n>0&&v>n; });
+      if(isOver) wekenOver++;
+      if(!hasSome) return `<span class="week-dot dot-empty" title="${mt.label}"></span>`;
+      return `<span class="week-dot ${isOver?'dot-red':'dot-green'}" title="${mt.label}: ${isOver?'boven norm':'op koers'}"></span>`;
+    }).join('');
+
+    // Meest voorkomende overschrijding
+    const overCounts={};
+    METRICS.forEach(metric=>{
+      overCounts[metric]=last4.filter(mt=>{ const v=mt.medewerkers[m]?.[metric]; const n=getNorm(metric,mt.btwNorm||0); return v!=null&&n>0&&v>n; }).length;
+    });
+    const topMetrics=METRICS.filter(metric=>overCounts[metric]>0).sort((a,b)=>overCounts[b]-overCounts[a]).slice(0,2).map(metric=>M_LABELS[METRICS.indexOf(metric)]).join(', ')||'—';
+
+    // Trend eerste vs laatste weekmeting
+    let trend='—';
+    if(last4.length>=2){
+      const first=last4[0], last=last4[last4.length-1];
+      const fo=METRICS.filter(metric=>{ const v=first.medewerkers[m]?.[metric]; const n=getNorm(metric,first.btwNorm||0); return v!=null&&n>0&&v>n; }).length;
+      const lo=METRICS.filter(metric=>{ const v=last.medewerkers[m]?.[metric]; const n=getNorm(metric,last.btwNorm||0); return v!=null&&n>0&&v>n; }).length;
+      if(lo>fo) trend='<span style="color:var(--red)">↑ Verslechtert</span>';
+      else if(lo<fo) trend='<span style="color:var(--green)">↓ Verbetert</span>';
+      else trend='<span style="color:var(--gold)">→ Stabiel</span>';
+    }
+
+    let st='';
+    if(wekenOver>=3) st='<span class="status-badge status-red">Structureel risico</span>';
+    else if(wekenOver===2) st='<span class="status-badge status-warn">Aandacht nodig</span>';
+    else if(wekenOver===0) st='<span class="status-badge status-ok">Op koers</span>';
+    else st='<span class="status-badge" style="background:var(--navy-light);color:var(--text-muted);border:1px solid var(--border)">Let op</span>';
+
+    return `<tr><td style="font-weight:700">${m}</td>
+      <td><div class="week-dots">${dots}</div></td>
+      <td style="font-weight:600;color:${wekenOver>=3?'var(--red)':wekenOver>=2?'var(--gold)':'var(--green)'}">${wekenOver}/${last4.length}</td>
+      <td style="color:var(--text-muted);font-size:12px">${topMetrics}</td>
+      <td>${trend}</td><td>${st}</td></tr>`;
+  }).join('');
+
+  content.innerHTML=`<p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Op basis van de laatste ${last4.length} weekstartmetingen: ${last4.map(m=>m.label).join(', ')}</p>
+    <table class="struct-table"><thead><tr>
+      <th>Medewerker</th><th>Weken</th><th>Boven norm</th><th>Meest voorkomend</th><th>Trend</th><th>Status</th>
+    </tr></thead><tbody>${rows}</tbody></table>
+    <p style="margin-top:16px;font-size:12px;color:var(--text-muted);border-top:1px solid var(--border);padding-top:12px">
+      🔴 3+ weken boven norm = structureel risico &nbsp;|&nbsp; 🟡 2 weken = aandacht &nbsp;|&nbsp; 🟢 0–1 week = op koers<br>
+      <em style="font-size:11px">Tussentijdse checks tellen niet mee in structurele analyse — alleen weekstartmetingen.</em>
+    </p>`;
+}
+
+// ===== NAVIGATIE =====
+function showTab(name, btn){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='historie') renderHistorie();
+  if(name==='dashboard') renderDashboard();
+  if(name==='trend') renderTrend();
+  if(name==='structureel') renderStructureel();
+}
+
+init();
+</script>
+</body>
+</html>
