@@ -307,6 +307,7 @@
           <th>Taken Radar<br><small class="n-radar"></small></th>
           <th>Kwal.controls<br><small class="n-kwal"></small></th>
           <th>BTW<br><small class="n-btw"></small></th>
+          <th>Uren<br><small>ingevuld</small></th>
           <th id="diff-header" style="display:none">Verschil</th>
           <th>Status</th>
         </tr>
@@ -433,6 +434,7 @@ const MEDEWERKERS = ['Cennet','Dennis','Gerjan','Iris','Melvin','Mike','Natasja'
 const METRICS     = ['trans','vragen','radar','kwal','btw'];
 const M_LABELS    = ['Transacties','Vragen','Taken Radar','Kwal.controls','BTW'];
 const M_MAX_FACTOR= [1.5, 2.5, 4, 4, 5];
+const URENVELD    = 'uren'; // apart boolean veld, los van METRICS
 
 let normen = {trans:350,vragen:10,radar:15,kwal:30,btw:0};
 // metingen = array van { id, datum, label, type:'week'|'check', btwNorm, medewerkers:{naam:{trans,vragen,radar,kwal,btw}} }
@@ -594,6 +596,7 @@ function buildInvoerTable(){
     let diffCells = showDiff ? METRICS.map(metric=>`<td class="diff-cell" id="diff-${m}-${metric}">—</td>`).join('') : '';
     tr.innerHTML = `<td class="med-naam">${m}</td>`
       + METRICS.map(metric=>`<td><input class="num-input" type="number" min="0" id="inp-${m}-${metric}" placeholder="—" oninput="onInput(this,'${metric}','${m}')"></td>`).join('')
+      + `<td style="text-align:center"><input type="checkbox" id="inp-${m}-uren" onchange="updateRowStatus('${m}', parseInt(document.getElementById('inp-btw-norm').value)||normen.btw||0)" style="width:18px;height:18px;cursor:pointer;accent-color:var(--gold)"></td>`
       + diffCells
       + `<td><span class="status-badge" id="status-${m}">—</span></td>`;
     tbody.appendChild(tr);
@@ -641,6 +644,8 @@ function updateRowStatus(m, btwNorm){
     const norm = getNorm(metric, btwNorm);
     if(!isNaN(v)&&norm>0&&v>norm) anyOver=true;
   });
+  const urenBox = document.getElementById(`inp-${m}-uren`);
+  if(urenBox && !urenBox.checked && anyFilled) anyOver = true;
   const badge = document.getElementById(`status-${m}`);
   if(!anyFilled){ badge.textContent='—'; badge.className='status-badge'; return; }
   badge.textContent = anyOver ? 'Achterstand' : 'Binnen norm';
@@ -655,6 +660,8 @@ function clearInvoer(){
       const d = document.getElementById(`diff-${m}-${metric}`);
       if(d){ d.textContent='—'; d.className='diff-cell'; }
     });
+    const urenBox = document.getElementById(`inp-${m}-uren`);
+    if(urenBox) urenBox.checked = false;
     const b = document.getElementById(`status-${m}`);
     if(b){ b.textContent='—'; b.className='status-badge'; }
   });
@@ -671,6 +678,8 @@ function saveMeting(){
       const v = document.getElementById(`inp-${m}-${metric}`).value;
       medewerkers[m][metric] = v!=='' ? parseInt(v) : null;
     });
+    const urenBox = document.getElementById(`inp-${m}-uren`);
+    medewerkers[m][URENVELD] = urenBox ? urenBox.checked : null;
   });
   const id = Date.now().toString();
   metingen.push({id,datum,label,type:currentType,btwNorm,medewerkers});
@@ -767,21 +776,25 @@ function renderDashboard(){
   const btwNorm = meting.btwNorm||0;
   const rows = MEDEWERKERS.map(m=>{
     const md = meting.medewerkers[m]||{};
-    const anyOver = METRICS.some(metric=>{ const v=md[metric]; const n=getNorm(metric,btwNorm); return v!==null&&v!==undefined&&n>0&&v>n; });
+    const urenIngevuld = md[URENVELD];
+    let anyOver = METRICS.some(metric=>{ const v=md[metric]; const n=getNorm(metric,btwNorm); return v!==null&&v!==undefined&&n>0&&v>n; });
     const allNull = METRICS.every(metric=>md[metric]===null||md[metric]===undefined);
+    if(urenIngevuld===false) anyOver = true;
     const st = allNull ? '<span class="status-badge">—</span>' : anyOver ? '<span class="status-badge status-red">Achterstand</span>' : '<span class="status-badge status-ok">Op koers</span>';
+    const urenCel = urenIngevuld===true ? `<td class="cell-ok">✓</td>` : urenIngevuld===false ? `<td class="cell-red">✕</td>` : `<td class="cell-empty">—</td>`;
     return `<tr><td>${m}</td>${METRICS.map(metric=>{
       const v=md[metric]; const n=getNorm(metric,btwNorm);
       const cls=v===null||v===undefined?'cell-empty':(n>0&&v>n?'cell-red':'cell-ok');
       return `<td class="${cls}">${v!==null&&v!==undefined?v:'—'}</td>`;
-    }).join('')}<td>${st}</td></tr>`;
+    }).join('')}${urenCel}<td>${st}</td></tr>`;
   }).join('');
   const totals = METRICS.map(metric=>{
     const s=MEDEWERKERS.reduce((a,m)=>{ const v=meting.medewerkers[m]?.[metric]; return a+(v!=null?v:0); },0);
     return `<td style="font-weight:700;color:var(--gold)">${s}</td>`;
   }).join('');
-  content.innerHTML=`<table class="dash-table"><thead><tr><th>Medewerker</th>${M_LABELS.map((l,i)=>`<th>${l}<br><small style="color:var(--border);font-weight:400">≤${i===4?(btwNorm||'—'):Object.values(normen)[i]}</small></th>`).join('')}<th>Status</th></tr></thead>
-    <tbody>${rows}<tr style="border-top:2px solid var(--border)"><td style="color:var(--text-muted);font-size:10px;font-weight:600">TOTAAL</td>${totals}<td></td></tr></tbody></table>`;
+  const urenTotaal = MEDEWERKERS.filter(m=>meting.medewerkers[m]?.[URENVELD]===true).length;
+  content.innerHTML=`<table class="dash-table"><thead><tr><th>Medewerker</th>${M_LABELS.map((l,i)=>`<th>${l}<br><small style="color:var(--border);font-weight:400">≤${i===4?(btwNorm||'—'):Object.values(normen)[i]}</small></th>`).join('')}<th>Uren<br><small style="color:var(--border);font-weight:400">ingevuld</small></th><th>Status</th></tr></thead>
+    <tbody>${rows}<tr style="border-top:2px solid var(--border)"><td style="color:var(--text-muted);font-size:10px;font-weight:600">TOTAAL</td>${totals}<td style="font-weight:700;color:var(--gold)">${urenTotaal}/${MEDEWERKERS.length}</td><td></td></tr></tbody></table>`;
 }
 function selectDash(id){ selectedDashId=id; renderDashboard(); }
 
@@ -924,11 +937,13 @@ function renderStructureel(){
 
   const rows = MEDEWERKERS.map(m=>{
     let wekenOver=0;
+    let wekenUrenNiet=0;
     const dots = last4.map(mt=>{
       const md=mt.medewerkers[m]||{};
       const btwNorm=mt.btwNorm||0;
       const hasSome=METRICS.some(metric=>md[metric]!=null);
-      const isOver=METRICS.some(metric=>{ const v=md[metric]; const n=getNorm(metric,btwNorm); return v!=null&&n>0&&v>n; });
+      let isOver=METRICS.some(metric=>{ const v=md[metric]; const n=getNorm(metric,btwNorm); return v!=null&&n>0&&v>n; });
+      if(md[URENVELD]===false){ isOver=true; wekenUrenNiet++; }
       if(isOver) wekenOver++;
       if(!hasSome) return `<span class="week-dot dot-empty" title="${mt.label}"></span>`;
       return `<span class="week-dot ${isOver?'dot-red':'dot-green'}" title="${mt.label}: ${isOver?'boven norm':'op koers'}"></span>`;
@@ -939,7 +954,8 @@ function renderStructureel(){
     METRICS.forEach(metric=>{
       overCounts[metric]=last4.filter(mt=>{ const v=mt.medewerkers[m]?.[metric]; const n=getNorm(metric,mt.btwNorm||0); return v!=null&&n>0&&v>n; }).length;
     });
-    const topMetrics=METRICS.filter(metric=>overCounts[metric]>0).sort((a,b)=>overCounts[b]-overCounts[a]).slice(0,2).map(metric=>M_LABELS[METRICS.indexOf(metric)]).join(', ')||'—';
+    let topMetrics=METRICS.filter(metric=>overCounts[metric]>0).sort((a,b)=>overCounts[b]-overCounts[a]).slice(0,2).map(metric=>M_LABELS[METRICS.indexOf(metric)]).join(', ')||'—';
+    if(wekenUrenNiet>0){ topMetrics = topMetrics==='—' ? `Uren niet ingevuld (${wekenUrenNiet}x)` : `${topMetrics}, Uren niet ingevuld (${wekenUrenNiet}x)`; }
 
     // Trend eerste vs laatste weekmeting
     let trend='—';
@@ -1112,25 +1128,43 @@ function renderRapporten(){
       </div>`;
     }).join('');
 
+    // Uren-kaart
+    const urenWaarde = md[URENVELD];
+    const urenKaartKleur = urenWaarde===true ? 'groen' : urenWaarde===false ? 'rood' : '';
+    const urenKaartTekst = urenWaarde===true ? 'Ja' : urenWaarde===false ? 'Nee' : '—';
+    const urenKaart = `<div class="rapport-metric-kaart ${urenKaartKleur}">
+      <div class="rmk-icon">🕒</div>
+      <div class="rmk-label">Uren ingevuld</div>
+      <div class="rmk-waarde ${urenKaartKleur}" style="font-size:22px">${urenKaartTekst}</div>
+      <div class="rmk-norm">vorige week</div>
+    </div>`;
+    const metricKaartenMetUren = metricKaarten + urenKaart;
+
     // Conclusie tekst
     const overMetrics = METRICS.filter(metric=>{ const v=md[metric]; const n=getNorm(metric,btwNorm); return v!=null&&n>0&&v>n; });
     const binnenMetrics = METRICS.filter(metric=>{ const v=md[metric]; const n=getNorm(metric,btwNorm); return v!=null&&n>0&&v<=n; });
     let conclusieTekst = '';
     if(!hasSome){
       conclusieTekst = 'Geen gegevens beschikbaar voor deze meting.';
-    } else if(overMetrics.length===0){
+    } else if(overMetrics.length===0 && urenWaarde!==false){
       conclusieTekst = `<strong>Alle onderdelen binnen norm.</strong> Goed ritme — vasthouden en overzicht bewaken.`;
     } else {
       const overNamen = overMetrics.map(m=>M_LABELS[METRICS.indexOf(m)]).join(', ');
-      const topMetric = overMetrics[0];
-      const topV = md[topMetric];
-      const topN = getNorm(topMetric, btwNorm);
-      const topOver = topV - topN;
-      conclusieTekst = `<strong>Achterstand zichtbaar op: ${overNamen}.</strong> Eerste prioriteit: ${M_LABELS[METRICS.indexOf(topMetric)]} terugbrengen (${topV} → norm ≤ ${topN}, verschil: ${topOver}).`;
+      let extra = '';
+      if(urenWaarde===false) extra = overNamen ? ' Daarnaast zijn de uren van vorige week nog niet ingevuld.' : 'Uren van vorige week zijn nog niet ingevuld.';
+      if(overMetrics.length>0){
+        const topMetric = overMetrics[0];
+        const topV = md[topMetric];
+        const topN = getNorm(topMetric, btwNorm);
+        const topOver = topV - topN;
+        conclusieTekst = `<strong>Achterstand zichtbaar op: ${overNamen}.</strong> Eerste prioriteit: ${M_LABELS[METRICS.indexOf(topMetric)]} terugbrengen (${topV} → norm ≤ ${topN}, verschil: ${topOver}).${extra}`;
+      } else {
+        conclusieTekst = `<strong>Achterstand zichtbaar.</strong> ${extra}`;
+      }
     }
 
     // Status
-    const anyOver = overMetrics.length > 0;
+    const anyOver = overMetrics.length > 0 || urenWaarde===false;
     const statusKleur = !hasSome ? '#7a94b0' : anyOver ? '#e05252' : '#4caf7d';
     const statusBg = !hasSome ? '#243450' : anyOver ? '#2a1515' : '#0f2a1c';
     const statusBorder = !hasSome ? '#243450' : anyOver ? '#e05252' : '#4caf7d';
@@ -1176,7 +1210,7 @@ function renderRapporten(){
         </div>
       </div>
       <div class="rapport-body">
-        <div class="rapport-metrics-grid">${metricKaarten}</div>
+        <div class="rapport-metrics-grid">${metricKaartenMetUren}</div>
         <div class="rapport-conclusie">${conclusieTekst}</div>
         ${sparkHtml}
       </div>
@@ -1252,7 +1286,7 @@ function maakLeesbareTabel(body) {
   let overzicht = ss.getSheetByName('Overzicht');
   if (!overzicht) overzicht = ss.insertSheet('Overzicht');
   overzicht.clearContents();
-  const headers = ['Datum','Label','Type','Medewerker','Transacties','Vragen','Taken Radar','Kwal.controls','BTW','BTW-norm'];
+  const headers = ['Datum','Label','Type','Medewerker','Transacties','Vragen','Taken Radar','Kwal.controls','BTW','BTW-norm','Uren ingevuld'];
   overzicht.getRange(1,1,1,headers.length).setValues([headers]);
   overzicht.getRange(1,1,1,headers.length).setBackground('#162436').setFontColor('#c9a84c').setFontWeight('bold');
   const rijen = [];
@@ -1260,7 +1294,8 @@ function maakLeesbareTabel(body) {
   (body.metingen||[]).forEach(m=>{
     medewerkers.forEach(naam=>{
       const md = m.medewerkers[naam]||{};
-      rijen.push([m.datum,m.label,m.type==='week'?'Weekstart':'Check',naam,md.trans??'',md.vragen??'',md.radar??'',md.kwal??'',md.btw??'',m.btwNorm||'']);
+      const urenTekst = md.uren===true?'Ja':md.uren===false?'Nee':'';
+      rijen.push([m.datum,m.label,m.type==='week'?'Weekstart':'Check',naam,md.trans??'',md.vragen??'',md.radar??'',md.kwal??'',md.btw??'',m.btwNorm||'',urenTekst]);
     });
   });
   if(rijen.length>0) overzicht.getRange(2,1,rijen.length,headers.length).setValues(rijen);
