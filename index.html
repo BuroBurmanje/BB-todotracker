@@ -1,0 +1,1433 @@
+
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BB Werkvoorraad Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  :root {
+    --navy:#0d1b2a; --navy-mid:#162436; --navy-light:#1e3148;
+    --gold:#c9a84c; --gold-light:#e8c97a;
+    --white:#f0f4f8; --red:#e05252; --red-bg:#2a1515;
+    --green:#4caf7d; --green-bg:#0f2a1c;
+    --border:#243450; --text-muted:#7a94b0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--navy);color:var(--white);font-family:'Inter',sans-serif;font-size:14px;min-height:100vh;}
+
+  header{background:var(--navy-mid);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;flex-wrap:wrap;}
+  .bb-logo{width:38px;height:38px;border:2px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;letter-spacing:1px;flex-shrink:0;}
+  header h1{font-size:15px;font-weight:600;flex:1;} header h1 span{color:var(--gold);}
+  .nav-tabs{display:flex;gap:4px;flex-wrap:wrap;}
+  .nav-tab{background:none;border:1px solid var(--border);color:var(--text-muted);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'Inter',sans-serif;transition:all .15s;}
+  .nav-tab.active,.nav-tab:hover{background:var(--navy-light);color:var(--gold);border-color:var(--gold);}
+
+  main{padding:20px;max-width:1150px;margin:0 auto;}
+  .tab-content{display:none;} .tab-content.active{display:block;}
+
+  .card{background:var(--navy-mid);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:18px;}
+  .card-title{font-size:13px;font-weight:600;color:var(--gold);margin-bottom:14px;}
+
+  /* TYPE BADGE */
+  .type-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+  .type-btn{padding:6px 16px;border-radius:20px;border:1px solid var(--border);background:var(--navy-light);color:var(--text-muted);font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .15s;font-weight:500;}
+  .type-btn.active-week{background:#0f2a1c;color:var(--green);border-color:var(--green);}
+  .type-btn.active-check{background:#1a1500;color:var(--gold);border-color:var(--gold);}
+  .type-label{font-size:11px;color:var(--text-muted);font-weight:500;}
+
+  /* META ROW */
+  .meta-row{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+  .meta-row label{font-size:12px;color:var(--text-muted);font-weight:500;white-space:nowrap;}
+  .meta-row input,.meta-row select{background:var(--navy-light);border:1px solid var(--border);color:var(--white);padding:6px 10px;border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;outline:none;}
+  .meta-row input:focus,.meta-row select:focus{border-color:var(--gold);}
+  .meta-row input[type=text]{width:180px;}
+  .meta-row input[type=number]{width:80px;}
+
+  /* INVOER TABEL */
+  .invoer-table{width:100%;border-collapse:collapse;}
+  .invoer-table th{text-align:left;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);padding:8px 8px;border-bottom:1px solid var(--border);}
+  .invoer-table td{padding:5px 5px;border-bottom:1px solid var(--border);}
+  .invoer-table tr:last-child td{border-bottom:none;}
+  .med-naam{font-weight:600;font-size:13px;padding:5px 8px;min-width:70px;}
+
+  .num-input{background:var(--navy-light);border:1px solid var(--border);color:var(--white);padding:5px 6px;border-radius:6px;width:72px;font-family:'Inter',sans-serif;font-size:13px;text-align:center;outline:none;transition:border-color .15s;}
+  .num-input:focus{border-color:var(--gold);}
+  .num-input.over-norm{border-color:var(--red);background:var(--red-bg);color:#ff8a8a;}
+  .num-input.op-norm{border-color:var(--gold);}
+
+  /* VERSCHIL CEL */
+  .diff-cell{font-size:12px;font-weight:700;text-align:center;width:50px;}
+  .diff-down{color:var(--green);}
+  .diff-up{color:var(--red);}
+  .diff-same{color:var(--text-muted);}
+
+  .status-badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+  .status-ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green);}
+  .status-red{background:var(--red-bg);color:var(--red);border:1px solid var(--red);}
+  .status-warn{background:#2a200f;color:var(--gold);border:1px solid var(--gold);}
+
+  .btn-primary{background:var(--gold);color:var(--navy);border:none;padding:9px 22px;border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s;}
+  .btn-primary:hover{background:var(--gold-light);}
+  .btn-secondary{background:var(--navy-light);color:var(--white);border:1px solid var(--border);padding:7px 16px;border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;}
+  .btn-secondary:hover{border-color:var(--gold);color:var(--gold);}
+  .btn-danger{background:var(--red-bg);color:var(--red);border:1px solid var(--red);padding:5px 12px;border-radius:6px;font-family:'Inter',sans-serif;font-size:12px;cursor:pointer;}
+  .btn-row{display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap;}
+  .save-msg{font-size:12px;color:var(--green);display:none;}
+
+  /* HISTORIE LIJST */
+  .hist-list{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+  .hist-item{display:flex;align-items:center;gap:10px;background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;transition:all .15s;}
+  .hist-item:hover,.hist-item.selected{border-color:var(--gold);background:var(--navy);}
+  .hist-item .hi-label{font-weight:600;font-size:13px;flex:1;}
+  .hist-item .hi-date{font-size:11px;color:var(--text-muted);}
+  .hist-item .hi-type{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:10px;}
+  .hi-type-week{background:var(--green-bg);color:var(--green);border:1px solid var(--green);}
+  .hi-type-check{background:#1a1500;color:var(--gold);border:1px solid var(--gold);}
+
+  /* DASHBOARD */
+  .dash-table{width:100%;border-collapse:collapse;}
+  .dash-table th{text-align:center;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);padding:9px 6px;border-bottom:1px solid var(--border);}
+  .dash-table th:first-child{text-align:left;}
+  .dash-table td{text-align:center;padding:8px 6px;border-bottom:1px solid var(--border);font-size:13px;}
+  .dash-table td:first-child{text-align:left;font-weight:600;}
+  .dash-table tr:last-child td{border-bottom:none;}
+  .cell-red{color:var(--red);font-weight:700;} .cell-ok{color:var(--green);} .cell-empty{color:var(--border);}
+
+  /* TREND / GRAFIEK */
+  .trend-medewerker-select{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+  .med-pill{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--navy-light);color:var(--text-muted);font-size:12px;cursor:pointer;transition:all .15s;}
+  .med-pill.active{border-color:var(--gold);color:var(--gold);background:var(--navy);}
+
+  .grafiek-wrap{overflow-x:auto;margin-bottom:20px;}
+  .grafiek-svg{display:block;}
+
+  .trend-diff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:16px;}
+  .trend-diff-card{background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:14px;}
+  .tdc-name{font-weight:700;font-size:13px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+  .tdc-metric{display:grid;grid-template-columns:110px 1fr 36px 50px;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;}
+  .tdc-mn{color:var(--text-muted);}
+  .bar-wrap{background:var(--navy);border-radius:3px;height:5px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:3px;}
+  .bar-ok{background:var(--green);} .bar-over{background:var(--red);} .bar-warn{background:var(--gold);}
+  .tdc-val{text-align:right;font-weight:600;}
+  .val-ok{color:var(--green);} .val-over{color:var(--red);} .val-warn{color:var(--gold);}
+  .tdc-diff{text-align:right;font-size:11px;font-weight:700;}
+
+  /* STRUCTUREEL */
+  .struct-table{width:100%;border-collapse:collapse;}
+  .struct-table th{text-align:left;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);padding:9px 10px;border-bottom:1px solid var(--border);}
+  .struct-table td{padding:9px 10px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+  .struct-table tr:last-child td{border-bottom:none;}
+  .week-dots{display:flex;gap:4px;}
+  .week-dot{width:13px;height:13px;border-radius:50%;display:inline-block;}
+  .dot-red{background:var(--red);} .dot-green{background:var(--green);} .dot-empty{background:var(--navy-light);border:1px solid var(--border);}
+
+  /* NORMEN */
+  .normen-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;}
+  .norm-item{background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:12px;}
+  .norm-item label{font-size:10px;color:var(--text-muted);display:block;margin-bottom:5px;font-weight:500;text-transform:uppercase;letter-spacing:1px;}
+  .norm-item input{background:var(--navy);border:1px solid var(--border);color:var(--gold);padding:5px 8px;border-radius:5px;width:100%;font-family:'Inter',sans-serif;font-size:16px;font-weight:700;outline:none;text-align:center;}
+  .norm-item input:focus{border-color:var(--gold);}
+
+  .empty-state{text-align:center;padding:36px;color:var(--text-muted);font-size:13px;}
+  .empty-state .icon{font-size:28px;margin-bottom:10px;}
+
+  @media(max-width:600px){
+    main{padding:10px;} header{padding:8px 12px;} header h1{font-size:13px;}
+    .nav-tab{padding:4px 8px;font-size:11px;} .num-input{width:58px;font-size:12px;} .med-naam{font-size:12px;}
+  }
+
+  /* ===== RAPPORT STIJL ===== */
+  .rapport-persoon {
+    background: #0d1b2a;
+    border: 1px solid #243450;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    overflow: hidden;
+    page-break-inside: avoid;
+  }
+  .rapport-header {
+    background: linear-gradient(135deg, #162436 0%, #1e3148 100%);
+    border-bottom: 2px solid #c9a84c;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .rapport-naam {
+    font-size: 22px;
+    font-weight: 700;
+    color: #f0f4f8;
+    letter-spacing: 0.5px;
+  }
+  .rapport-meta {
+    font-size: 11px;
+    color: #7a94b0;
+    margin-top: 3px;
+  }
+  .rapport-status-groot {
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 18px;
+    border-radius: 20px;
+  }
+  .rapport-body { padding: 20px 24px; }
+
+  .rapport-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .rapport-metric-kaart {
+    background: #162436;
+    border: 1px solid #243450;
+    border-radius: 8px;
+    padding: 14px;
+    position: relative;
+  }
+  .rapport-metric-kaart.rood { border-color: #e05252; background: #2a1515; }
+  .rapport-metric-kaart.groen { border-color: #4caf7d; }
+  .rapport-metric-kaart.goud { border-color: #c9a84c; }
+
+  .rmk-icon { font-size: 18px; margin-bottom: 6px; }
+  .rmk-label { font-size: 10px; color: #7a94b0; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .rmk-waarde { font-size: 28px; font-weight: 700; line-height: 1; }
+  .rmk-waarde.rood { color: #e05252; }
+  .rmk-waarde.groen { color: #4caf7d; }
+  .rmk-waarde.goud { color: #c9a84c; }
+  .rmk-norm { font-size: 10px; color: #7a94b0; margin-top: 4px; }
+  .rmk-badge { font-size: 10px; font-weight: 700; position: absolute; top: 10px; right: 10px; }
+
+  .rapport-bar-wrap { background: #0d1b2a; border-radius: 4px; height: 6px; margin-top: 8px; overflow: hidden; }
+  .rapport-bar { height: 100%; border-radius: 4px; }
+
+  .rapport-conclusie {
+    background: #162436;
+    border: 1px solid #243450;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  .rapport-conclusie strong { color: #c9a84c; }
+
+  .rapport-sparkline-wrap { margin-top: 14px; }
+  .rapport-sparkline-titel { font-size: 11px; color: #7a94b0; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+
+  .rapport-footer-bb {
+    background: #162436;
+    border-top: 1px solid #243450;
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #7a94b0;
+  }
+  .rapport-print-btn {
+    background: none;
+    border: 1px solid #243450;
+    color: #7a94b0;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .rapport-print-btn:hover { border-color: #c9a84c; color: #c9a84c; }
+
+  /* PRINT */
+  @media print {
+    header, .card > .card-title, .card > div:first-child, #rapport-meting-select,
+    .btn-primary, .rapport-print-btn, .nav-tabs, .tab-content:not(.active) { display: none !important; }
+    body { background: #0d1b2a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    main { padding: 0; }
+    .card { border: none; padding: 0; }
+    .rapport-persoon { page-break-after: always; border-radius: 0; border: none; margin: 0; }
+    .rapport-persoon:last-child { page-break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="bb-logo">BB</div>
+  <h1>Buro Burmanje — <span>Werkvoorraad Tracker</span></h1>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="showTab('invoer',this)">Invoer</button>
+    <button class="nav-tab" onclick="showTab('historie',this)">Historie</button>
+    <button class="nav-tab" onclick="showTab('dashboard',this)">Dashboard</button>
+    <button class="nav-tab" onclick="showTab('trend',this)">Trend & Grafiek</button>
+    <button class="nav-tab" onclick="showTab('structureel',this)">Structureel</button>
+    <button class="nav-tab" onclick="showTab('normen',this)">Normen</button>
+    <button class="nav-tab" onclick="showTab('rapporten',this)">📄 Rapporten</button>
+  </nav>
+  <div style="display:flex;gap:6px;margin-left:8px;align-items:center;">
+    <span id="sync-status" style="font-size:11px;color:var(--text-muted);white-space:nowrap;"></span>
+    <button onclick="laadVanSheets()" style="background:#0f2a1c;border:1px solid #4caf7d;color:#4caf7d;padding:5px 10px;border-radius:6px;font-family:'Inter',sans-serif;font-size:12px;cursor:pointer;" title="Nu synchroniseren met Google Sheets">↺ Sync</button>
+  </div>
+</header>
+<main>
+
+<!-- INVOER -->
+<div id="tab-invoer" class="tab-content active">
+  <div class="card">
+    <div class="card-title">📋 Nieuwe meting invoeren</div>
+
+    <div id="bewerk-modus-balk" style="display:none;align-items:center;gap:12px;background:#1a1500;border:1px solid var(--gold);border-radius:8px;padding:10px 14px;margin-bottom:16px;">
+      <span id="bewerk-modus-tekst" style="font-size:13px;color:var(--gold);flex:1;"></span>
+      <button class="btn-secondary" onclick="annuleerBewerken()" style="padding:5px 14px;font-size:12px;">Annuleer bewerken</button>
+    </div>
+
+    <div class="type-row">
+      <span class="type-label">Type meting:</span>
+      <button class="type-btn active-week" id="btn-week" onclick="setType('week')">🟢 Weekstart (maandag)</button>
+      <button class="type-btn" id="btn-check" onclick="setType('check')">🟡 Tussentijdse check</button>
+    </div>
+
+    <div class="meta-row">
+      <label>Datum:</label>
+      <input type="date" id="inp-datum">
+      <label>Label:</label>
+      <input type="text" id="inp-label" placeholder="bv. Maandag start W26">
+      <label>BTW-norm week:</label>
+      <input type="number" id="inp-btw-norm" placeholder="bv. 5" style="width:70px">
+    </div>
+
+    <div id="vorige-info" style="display:none;background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text-muted);">
+      <span id="vorige-label"></span>
+    </div>
+
+    <table class="invoer-table">
+      <thead>
+        <tr>
+          <th>Medewerker</th>
+          <th>Transacties<br><small class="n-trans"></small></th>
+          <th>Vragen<br><small class="n-vragen"></small></th>
+          <th>Taken Radar<br><small class="n-radar"></small></th>
+          <th>Kwal.controls<br><small class="n-kwal"></small></th>
+          <th>BTW<br><small class="n-btw"></small></th>
+          <th>Uren<br><small>ingevuld</small></th>
+          <th id="diff-header" style="display:none">Verschil</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="invoer-body"></tbody>
+    </table>
+
+    <div class="btn-row">
+      <button class="btn-primary" id="btn-save-meting" onclick="saveMeting()">Meting opslaan</button>
+      <button class="btn-secondary" onclick="clearInvoer()">Leegmaken</button>
+      <span class="save-msg" id="save-msg">✓ Opgeslagen</span>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORIE -->
+<div id="tab-historie" class="tab-content">
+  <div class="card">
+    <div class="card-title">📂 Alle metingen</div>
+    <div id="hist-list-el"></div>
+    <div id="hist-detail"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="tab-dashboard" class="tab-content">
+  <div class="card">
+    <div class="card-title">📊 Dashboard — selecteer meting</div>
+    <div id="dash-pills" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;"></div>
+    <div id="dashboard-content"><div class="empty-state"><div class="icon">📭</div>Nog geen metingen opgeslagen.</div></div>
+  </div>
+</div>
+
+<!-- TREND -->
+<div id="tab-trend" class="tab-content">
+  <div class="card">
+    <div class="card-title">📈 Trend & Grafiek</div>
+    <div id="trend-metric-select" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;"></div>
+    <div id="grafiek-area"></div>
+    <hr style="border-color:var(--border);margin:18px 0;">
+    <div class="card-title" style="margin-bottom:10px;">🔄 Verschilkaarten — laatste vs vorige meting</div>
+    <div id="trend-diff-content"><div class="empty-state"><div class="icon">📈</div>Voeg minimaal 2 metingen toe.</div></div>
+  </div>
+</div>
+
+<!-- STRUCTUREEL -->
+<div id="tab-structureel" class="tab-content">
+  <div class="card">
+    <div class="card-title">🔍 Structureel overzicht — op basis van weekstartmetingen</div>
+    <div id="struct-content"><div class="empty-state"><div class="icon">🔍</div>Voeg minimaal 2 weekstartmetingen toe.</div></div>
+  </div>
+</div>
+
+<!-- NORMEN -->
+<div id="tab-normen" class="tab-content">
+  <div class="card">
+    <div class="card-title">⚙️ Normen aanpassen</div>
+    <div class="normen-grid">
+      <div class="norm-item"><label>Transacties</label><input type="number" id="norm-trans" value="350"></div>
+      <div class="norm-item"><label>Vragen</label><input type="number" id="norm-vragen" value="10"></div>
+      <div class="norm-item"><label>Taken Radar</label><input type="number" id="norm-radar" value="15"></div>
+      <div class="norm-item"><label>Kwaliteitscontroles</label><input type="number" id="norm-kwal" value="30"></div>
+      <div class="norm-item"><label>BTW-aangiftes</label><input type="number" id="norm-btw" placeholder="Wisselend per week"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="saveNormen()">Opslaan</button>
+      <span class="save-msg" id="save-msg-normen">✓ Normen opgeslagen</span>
+    </div>
+  </div>
+</div>
+
+<!-- RAPPORTEN -->
+<div id="tab-rapporten" class="tab-content">
+  <div class="card">
+    <div class="card-title">📄 Rapporten per medewerker</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
+      <label style="font-size:12px;color:var(--text-muted);font-weight:500;">Meting:</label>
+      <select id="rapport-meting-select" style="background:var(--navy-light);border:1px solid var(--border);color:var(--white);padding:6px 10px;border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;outline:none;" onchange="renderRapporten()"></select>
+      <button class="btn-primary" onclick="printAlleRapporten()" style="margin-left:auto;">🖨️ Alles afdrukken / PDF</button>
+    </div>
+    <div id="rapporten-content"><div class="empty-state"><div class="icon">📄</div>Nog geen metingen beschikbaar.</div></div>
+  </div>
+</div>
+
+<!-- INSTELLINGEN -->
+<div id="tab-instellingen" class="tab-content">
+  <div class="card">
+    <div class="card-title">⚙ Instellingen — Google Sheets koppeling</div>
+
+    <div style="background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:20px;font-size:13px;line-height:1.7;">
+      <div style="color:var(--gold);font-weight:600;margin-bottom:8px;">Hoe werkt dit?</div>
+      <ol style="padding-left:18px;color:var(--text-muted);">
+        <li>Maak een Google Sheet aan en open <strong style="color:var(--white)">Extensies → Apps Script</strong></li>
+        <li>Plak het Apps Script (zie hieronder) en klik <strong style="color:var(--white)">Implementeren → Nieuwe implementatie</strong></li>
+        <li>Kies type: <strong style="color:var(--white)">Web-app</strong>, uitvoeren als: <strong style="color:var(--white)">Ik</strong>, toegang: <strong style="color:var(--white)">Iedereen</strong></li>
+        <li>Kopieer de gegenereerde <strong style="color:var(--white)">Web App URL</strong> en plak die hieronder</li>
+        <li>Upload dit HTML-bestand naar GitHub Pages en deel de URL met je collega's</li>
+      </ol>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Web App URL (van Google Apps Script)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <input type="text" id="inp-script-url" placeholder="https://script.google.com/macros/s/…/exec"
+          style="background:var(--navy-light);border:1px solid var(--border);color:var(--white);padding:8px 12px;border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;outline:none;flex:1;min-width:300px;">
+        <button class="btn-primary" onclick="slaScriptUrlOp()">Opslaan & verbinden</button>
+      </div>
+      <div id="sync-status-groot" style="margin-top:8px;font-size:12px;color:var(--text-muted);"></div>
+    </div>
+
+    <div>
+      <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Apps Script — kopieer dit naar Google Apps Script</div>
+      <div style="position:relative;">
+        <button onclick="kopieerScript()" style="position:absolute;top:8px;right:8px;background:var(--navy);border:1px solid var(--border);color:var(--gold);padding:4px 10px;border-radius:5px;font-family:'Inter',sans-serif;font-size:11px;cursor:pointer;z-index:1;">Kopieer</button>
+        <pre id="apps-script-code" style="background:var(--navy);border:1px solid var(--border);border-radius:8px;padding:16px;padding-right:80px;font-size:11px;color:#a8c7fa;overflow-x:auto;white-space:pre;font-family:'Courier New',monospace;line-height:1.5;"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+<script>
+const MEDEWERKERS = ['Cennet','Dennis','Gerjan','Iris','Melvin','Mike','Natasja','René','Thom'];
+const METRICS     = ['trans','vragen','radar','kwal','btw'];
+const M_LABELS    = ['Transacties','Vragen','Taken Radar','Kwal.controls','BTW'];
+const M_MAX_FACTOR= [1.5, 2.5, 4, 4, 5];
+const URENVELD    = 'uren'; // apart boolean veld, los van METRICS
+
+let normen = {trans:350,vragen:10,radar:15,kwal:30,btw:0};
+// metingen = array van { id, datum, label, type:'week'|'check', btwNorm, medewerkers:{naam:{trans,vragen,radar,kwal,btw}} }
+let metingen = [];
+let currentType = 'week';
+let selectedDashId = null;
+let selectedTrendMetric = 'trans';
+let selectedHistId = null;
+
+// ===== INIT =====
+// ===== GOOGLE SHEETS SYNC =====
+// Plak hier je Apps Script Web App URL na het instellen:
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzRjgnWXiOwyC8vIyStQU0NDs-jkyKiuHhOvMSlKyin1Atk-rl-xCuAWCyHuw6_2OLb/exec';
+
+function toonSyncStatus(tekst, kleur='var(--text-muted)'){
+  const el = document.getElementById('sync-status');
+  if(el){ el.textContent = tekst; el.style.color = kleur; }
+}
+
+async function laadVanSheets(){
+  if(!SCRIPT_URL){ toonSyncStatus('⚠ Geen Script URL ingesteld','var(--gold)'); return; }
+  toonSyncStatus('⟳ Laden uit Google Sheets…','var(--gold)');
+  try {
+    const r = await fetch(SCRIPT_URL + '?actie=laden', {method:'GET'});
+    const data = await r.json();
+    if(data.metingen) metingen = data.metingen;
+    if(data.normen){ normen = data.normen; updateNormUI(); }
+    // Ook lokaal cachen
+    localStorage.setItem('bb_metingen2', JSON.stringify(metingen));
+    localStorage.setItem('bb_normen', JSON.stringify(normen));
+    toonSyncStatus('✓ Gesynchroniseerd — ' + new Date().toLocaleTimeString('nl-NL'),'var(--green)');
+    buildInvoerTable();
+    updateVorigeInfo();
+  } catch(e){
+    toonSyncStatus('✗ Kan niet laden — controleer Script URL','var(--red)');
+    console.error(e);
+  }
+}
+
+async function slaOpInSheets(){
+  if(!SCRIPT_URL){ toonSyncStatus('⚠ Geen Script URL — lokaal opgeslagen','var(--gold)'); return false; }
+  toonSyncStatus('⟳ Opslaan in Google Sheets…','var(--gold)');
+  try {
+    const r = await fetch(SCRIPT_URL, {
+      method:'POST',
+      body: JSON.stringify({actie:'opslaan', metingen, normen}),
+    });
+    const data = await r.json();
+    if(data.ok){
+      toonSyncStatus('✓ Opgeslagen in Google Sheets — ' + new Date().toLocaleTimeString('nl-NL'),'var(--green)');
+      return true;
+    } else {
+      toonSyncStatus('✗ Fout bij opslaan: ' + (data.fout||'onbekend'),'var(--red)');
+      return false;
+    }
+  } catch(e){
+    toonSyncStatus('✗ Verbindingsfout — lokaal opgeslagen','var(--red)');
+    console.error(e);
+    return false;
+  }
+}
+
+function slaScriptUrlOp(){
+  const url = document.getElementById('inp-script-url').value.trim();
+  if(!url){ alert('Vul een geldige URL in.'); return; }
+  localStorage.setItem('bb_script_url', url);
+  location.reload();
+}
+
+function init(){
+  // Eerst lokale cache laden (snelle start)
+  const sn = localStorage.getItem('bb_normen');
+  if(sn) normen = JSON.parse(sn);
+  const sm = localStorage.getItem('bb_metingen2');
+  if(sm) metingen = JSON.parse(sm);
+
+  const now = new Date();
+  document.getElementById('inp-datum').value = now.toISOString().slice(0,10);
+  setType('week');
+  updateNormUI();
+  buildInvoerTable();
+  suggestLabel();
+
+  // Script URL tonen in instellingen
+  const urlInp = document.getElementById('inp-script-url');
+  if(urlInp) urlInp.value = localStorage.getItem('bb_script_url')||'';
+
+  // Dan live laden vanuit Sheets
+  if(localStorage.getItem('bb_script_url')) laadVanSheets();
+  else toonSyncStatus('⚠ Stel eerst de Google Script URL in via het tabblad Instellingen','var(--gold)');
+}
+
+function getNorm(metric, btwNorm){
+  return metric==='btw' ? (btwNorm||normen.btw||0) : normen[metric];
+}
+
+function updateNormUI(){
+  document.getElementById('norm-trans').value = normen.trans;
+  document.getElementById('norm-vragen').value = normen.vragen;
+  document.getElementById('norm-radar').value = normen.radar;
+  document.getElementById('norm-kwal').value = normen.kwal;
+  document.getElementById('norm-btw').value = normen.btw||'';
+  document.querySelectorAll('.n-trans').forEach(e=>e.textContent='≤'+normen.trans);
+  document.querySelectorAll('.n-vragen').forEach(e=>e.textContent='≤'+normen.vragen);
+  document.querySelectorAll('.n-radar').forEach(e=>e.textContent='≤'+normen.radar);
+  document.querySelectorAll('.n-kwal').forEach(e=>e.textContent='≤'+normen.kwal);
+  document.querySelectorAll('.n-btw').forEach(e=>e.textContent='wisselend');
+}
+
+// ===== TYPE =====
+function setType(t){
+  currentType = t;
+  document.getElementById('btn-week').className = 'type-btn' + (t==='week'?' active-week':'');
+  document.getElementById('btn-check').className = 'type-btn' + (t==='check'?' active-check':'');
+  suggestLabel();
+  updateVorigeInfo();
+  const dh = document.getElementById('diff-header');
+  dh.style.display = t==='check' ? '' : 'none';
+  buildInvoerTable();
+}
+
+function suggestLabel(){
+  const d = new Date(document.getElementById('inp-datum').value+'T12:00:00');
+  const dagen = ['Zondag','Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag'];
+  const dag = dagen[d.getDay()];
+  const week = getWeekNr(d);
+  document.getElementById('inp-label').value = currentType==='week'
+    ? `Weekstart W${week}`
+    : `${dag} check W${week}`;
+}
+
+document.getElementById('inp-datum').addEventListener('change', suggestLabel);
+
+function getWeekNr(d){
+  const dt = new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  dt.setUTCDate(dt.getUTCDate()+4-(dt.getUTCDay()||7));
+  const ys = new Date(Date.UTC(dt.getUTCFullYear(),0,1));
+  return Math.ceil((((dt-ys)/86400000)+1)/7);
+}
+
+function updateVorigeInfo(){
+  const el = document.getElementById('vorige-info');
+  const lbl = document.getElementById('vorige-label');
+  if(currentType!=='check' || metingen.length===0){ el.style.display='none'; return; }
+  const prev = [...metingen].reverse()[0];
+  el.style.display = '';
+  lbl.textContent = `Vergelijking met vorige meting: "${prev.label}" (${prev.datum}) — verschilkolom toont ↓ gedaald / ↑ gestegen t.o.v. die meting.`;
+}
+
+// ===== INVOER TABEL =====
+function buildInvoerTable(){
+  const tbody = document.getElementById('invoer-body');
+  tbody.innerHTML = '';
+  const showDiff = currentType==='check' && metingen.length>0;
+  const prev = showDiff ? [...metingen].reverse()[0] : null;
+
+  MEDEWERKERS.forEach(m=>{
+    const tr = document.createElement('tr');
+    let diffCells = showDiff ? METRICS.map(metric=>`<td class="diff-cell" id="diff-${m}-${metric}">—</td>`).join('') : '';
+    tr.innerHTML = `<td class="med-naam">${m}</td>`
+      + METRICS.map(metric=>`<td><input class="num-input" type="number" min="0" id="inp-${m}-${metric}" placeholder="—" oninput="onInput(this,'${metric}','${m}')"></td>`).join('')
+      + `<td style="text-align:center"><input type="checkbox" id="inp-${m}-uren" onchange="this.dataset.touched='1'; updateRowStatus('${m}', parseInt(document.getElementById('inp-btw-norm').value)||normen.btw||0)" style="width:18px;height:18px;cursor:pointer;accent-color:var(--gold)"></td>`
+      + diffCells
+      + `<td><span class="status-badge" id="status-${m}">—</span></td>`;
+    tbody.appendChild(tr);
+
+    // Vul vorige waarden in als referentie (placeholder)
+    if(prev){
+      METRICS.forEach(metric=>{
+        const v = prev.medewerkers[m]?.[metric];
+        const inp = document.getElementById(`inp-${m}-${metric}`);
+        if(v!==null&&v!==undefined) inp.placeholder = v;
+      });
+    }
+  });
+}
+
+function onInput(inp, metric, m){
+  const btwNorm = parseInt(document.getElementById('inp-btw-norm').value)||normen.btw||0;
+  const norm = getNorm(metric, btwNorm);
+  const val = parseInt(inp.value);
+  inp.classList.remove('over-norm','op-norm');
+  if(!isNaN(val)&&norm>0){
+    if(val>norm) inp.classList.add('over-norm');
+    else if(val===norm&&metric!=='btw') inp.classList.add('op-norm');
+  }
+  // Verschilkolom updaten
+  if(currentType==='check'&&metingen.length>0){
+    const prev = [...metingen].reverse()[0];
+    const prevVal = prev.medewerkers[m]?.[metric];
+    const diffEl = document.getElementById(`diff-${m}-${metric}`);
+    if(diffEl&&prevVal!==null&&prevVal!==undefined&&!isNaN(val)){
+      const d = val - prevVal;
+      if(d<0) { diffEl.textContent='↓'+Math.abs(d); diffEl.className='diff-cell diff-down'; }
+      else if(d>0) { diffEl.textContent='↑'+d; diffEl.className='diff-cell diff-up'; }
+      else { diffEl.textContent='→'; diffEl.className='diff-cell diff-same'; }
+    }
+  }
+  updateRowStatus(m, btwNorm);
+}
+
+function updateRowStatus(m, btwNorm){
+  let anyOver=false, anyFilled=false;
+  METRICS.forEach(metric=>{
+    const v = parseInt(document.getElementById(`inp-${m}-${metric}`).value);
+    if(!isNaN(v)) anyFilled=true;
+    const norm = getNorm(metric, btwNorm);
+    if(!isNaN(v)&&norm>0&&v>norm) anyOver=true;
+  });
+  const urenBox = document.getElementById(`inp-${m}-uren`);
+  if(urenBox && !urenBox.checked && anyFilled) anyOver = true;
+  const badge = document.getElementById(`status-${m}`);
+  if(!anyFilled){ badge.textContent='—'; badge.className='status-badge'; return; }
+  badge.textContent = anyOver ? 'Achterstand' : 'Binnen norm';
+  badge.className = 'status-badge '+(anyOver?'status-red':'status-ok');
+}
+
+function clearInvoer(){
+  MEDEWERKERS.forEach(m=>{
+    METRICS.forEach(metric=>{
+      const inp = document.getElementById(`inp-${m}-${metric}`);
+      if(inp){ inp.value=''; inp.classList.remove('over-norm','op-norm'); }
+      const d = document.getElementById(`diff-${m}-${metric}`);
+      if(d){ d.textContent='—'; d.className='diff-cell'; }
+    });
+    const urenBox = document.getElementById(`inp-${m}-uren`);
+    if(urenBox) urenBox.checked = false;
+    const b = document.getElementById(`status-${m}`);
+    if(b){ b.textContent='—'; b.className='status-badge'; }
+  });
+}
+
+function saveMeting(){
+  const datum = document.getElementById('inp-datum').value;
+  const label = document.getElementById('inp-label').value || datum;
+  const btwNorm = parseInt(document.getElementById('inp-btw-norm').value)||0;
+
+  if(bewerkModusId){
+    // BEWERK-MODUS: bestaande meting updaten, alleen ingevulde velden overschrijven
+    const meting = metingen.find(x=>x.id===bewerkModusId);
+    if(!meting){ bewerkModusId=null; toonBewerkModusUI(false); return; }
+    meting.datum = datum;
+    meting.label = label;
+    meting.btwNorm = btwNorm;
+    MEDEWERKERS.forEach(m=>{
+      if(!meting.medewerkers[m]) meting.medewerkers[m] = {};
+      METRICS.forEach(metric=>{
+        const v = document.getElementById(`inp-${m}-${metric}`).value;
+        if(v!=='') meting.medewerkers[m][metric] = parseInt(v);
+        // leeg laten = bestaande waarde behouden, niet wissen
+      });
+      const urenBox = document.getElementById(`inp-${m}-uren`);
+      if(urenBox && urenBox.dataset.touched==='1'){
+        meting.medewerkers[m][URENVELD] = urenBox.checked;
+      }
+    });
+    localStorage.setItem('bb_metingen2', JSON.stringify(metingen));
+    slaOpInSheets();
+    const msg = document.getElementById('save-msg');
+    msg.textContent = '✓ Meting bijgewerkt';
+    msg.style.display='inline'; setTimeout(()=>{msg.style.display='none'; msg.textContent='✓ Opgeslagen';},2500);
+    bewerkModusId = null;
+    toonBewerkModusUI(false);
+    return;
+  }
+
+  // NORMALE MODUS: nieuwe meting aanmaken
+  const medewerkers = {};
+  MEDEWERKERS.forEach(m=>{
+    medewerkers[m]={};
+    METRICS.forEach(metric=>{
+      const v = document.getElementById(`inp-${m}-${metric}`).value;
+      medewerkers[m][metric] = v!=='' ? parseInt(v) : null;
+    });
+    const urenBox = document.getElementById(`inp-${m}-uren`);
+    medewerkers[m][URENVELD] = urenBox ? urenBox.checked : null;
+  });
+  const id = Date.now().toString();
+  metingen.push({id,datum,label,type:currentType,btwNorm,medewerkers});
+  // Lokaal cachen
+  localStorage.setItem('bb_metingen2', JSON.stringify(metingen));
+  // Naar Sheets
+  slaOpInSheets();
+  const msg = document.getElementById('save-msg');
+  msg.style.display='inline'; setTimeout(()=>msg.style.display='none',2500);
+  updateVorigeInfo();
+}
+
+// ===== NORMEN =====
+function saveNormen(){
+  normen={
+    trans:parseInt(document.getElementById('norm-trans').value)||350,
+    vragen:parseInt(document.getElementById('norm-vragen').value)||10,
+    radar:parseInt(document.getElementById('norm-radar').value)||15,
+    kwal:parseInt(document.getElementById('norm-kwal').value)||30,
+    btw:parseInt(document.getElementById('norm-btw').value)||0,
+  };
+  localStorage.setItem('bb_normen',JSON.stringify(normen));
+  updateNormUI();
+  slaOpInSheets();
+  const msg=document.getElementById('save-msg-normen');
+  msg.style.display='inline'; setTimeout(()=>msg.style.display='none',2500);
+}
+
+// ===== HISTORIE =====
+function renderHistorie(){
+  const el = document.getElementById('hist-list-el');
+  const detail = document.getElementById('hist-detail');
+  if(metingen.length===0){ el.innerHTML='<div class="empty-state"><div class="icon">📂</div>Nog geen metingen.</div>'; detail.innerHTML=''; return; }
+  const sorted = [...metingen].reverse();
+  el.innerHTML = '<div class="hist-list">'
+    + sorted.map(m=>`<div class="hist-item ${m.id===selectedHistId?'selected':''}" onclick="showHistDetail('${m.id}')">
+        <span class="hi-type ${m.type==='week'?'hi-type-week':'hi-type-check'}">${m.type==='week'?'WEEK':'CHECK'}</span>
+        <span class="hi-label">${m.label}</span>
+        <span class="hi-date">${m.datum}</span>
+        <button class="btn-danger" onclick="deleteMeting('${m.id}',event)">✕</button>
+      </div>`).join('')
+    + '</div>';
+  if(selectedHistId) showHistDetailRender(selectedHistId);
+  else detail.innerHTML='';
+}
+
+function showHistDetail(id){ selectedHistId=id; renderHistorie(); }
+
+function showHistDetailRender(id){
+  const m = metingen.find(x=>x.id===id);
+  if(!m){ document.getElementById('hist-detail').innerHTML=''; return; }
+  const btwNorm = m.btwNorm||0;
+  const rows = MEDEWERKERS.map(med=>{
+    const md = m.medewerkers[med]||{};
+    const urenCel = md[URENVELD]===true ? `<td class="cell-ok" style="text-align:center">✓</td>` : md[URENVELD]===false ? `<td class="cell-red" style="text-align:center">✕</td>` : `<td class="cell-empty" style="text-align:center">—</td>`;
+    return `<tr><td style="font-weight:600">${med}</td>`
+      + METRICS.map(metric=>{
+          const v = md[metric];
+          const norm = getNorm(metric,btwNorm);
+          const cls = v===null||v===undefined ? 'cell-empty' : (norm>0&&v>norm?'cell-red':'cell-ok');
+          return `<td class="${cls}" style="text-align:center">${v!==null&&v!==undefined?v:'—'}</td>`;
+        }).join('')
+      + urenCel
+      + '</tr>';
+  }).join('');
+  document.getElementById('hist-detail').innerHTML = `
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:12px;color:var(--text-muted)">${m.datum} · ${m.label} · BTW-norm: ${btwNorm||'—'}</div>
+        <button class="btn-primary" onclick="bewerkMeting('${m.id}')" style="padding:6px 16px;font-size:12px;">✏️ Bewerk deze meting</button>
+      </div>
+      <table class="dash-table"><thead><tr>
+        <th>Medewerker</th>${M_LABELS.map(l=>`<th>${l}</th>`).join('')}<th>Uren</th>
+      </tr></thead><tbody>${rows}</tbody></table>
+    </div>`;
+}
+
+// ===== MEETING BEWERKEN =====
+let bewerkModusId = null;
+
+function bewerkMeting(id){
+  const m = metingen.find(x=>x.id===id);
+  if(!m) return;
+  bewerkModusId = id;
+
+  // Naar Invoer-tab springen
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-invoer').classList.add('active');
+  document.querySelector('.nav-tab').classList.add('active'); // eerste tab = Invoer
+
+  // Type instellen
+  currentType = m.type;
+  document.getElementById('btn-week').className = 'type-btn' + (m.type==='week'?' active-week':'');
+  document.getElementById('btn-check').className = 'type-btn' + (m.type==='check'?' active-check':'');
+
+  // Velden invullen
+  document.getElementById('inp-datum').value = m.datum;
+  document.getElementById('inp-label').value = m.label;
+  document.getElementById('inp-btw-norm').value = m.btwNorm || '';
+
+  buildInvoerTable();
+
+  MEDEWERKERS.forEach(med=>{
+    METRICS.forEach(metric=>{
+      const v = m.medewerkers[med]?.[metric];
+      const inp = document.getElementById(`inp-${med}-${metric}`);
+      if(inp) inp.value = v!==null&&v!==undefined ? v : '';
+    });
+    const urenBox = document.getElementById(`inp-${med}-uren`);
+    if(urenBox) urenBox.checked = m.medewerkers[med]?.[URENVELD] === true;
+  });
+
+  // Status badges bijwerken
+  const btwNorm = m.btwNorm||0;
+  MEDEWERKERS.forEach(med=>updateRowStatus(med, btwNorm));
+
+  // Knoppen aanpassen: toon "Wijzigingen opslaan" + "Annuleer bewerken"
+  toonBewerkModusUI(true, m.label);
+}
+
+function toonBewerkModusUI(aan, label){
+  const bar = document.getElementById('bewerk-modus-balk');
+  const btn = document.getElementById('btn-save-meting');
+  if(aan){
+    bar.style.display = 'flex';
+    document.getElementById('bewerk-modus-tekst').textContent = `✏️ Je bewerkt nu: ${label} — alleen ingevulde velden worden bijgewerkt, de rest blijft staan.`;
+    if(btn) btn.textContent = 'Wijzigingen opslaan';
+  } else {
+    bar.style.display = 'none';
+    if(btn) btn.textContent = 'Meting opslaan';
+  }
+}
+
+function annuleerBewerken(){
+  bewerkModusId = null;
+  toonBewerkModusUI(false);
+  clearInvoer();
+  document.getElementById('inp-label').value = '';
+  suggestLabel();
+}
+
+function deleteMeting(id, e){
+  e.stopPropagation();
+  if(!confirm('Deze meting verwijderen?')) return;
+  metingen = metingen.filter(m=>m.id!==id);
+  localStorage.setItem('bb_metingen2',JSON.stringify(metingen));
+  if(selectedHistId===id) selectedHistId=null;
+  slaOpInSheets();
+  renderHistorie();
+}
+
+// ===== DASHBOARD =====
+function renderDashboard(){
+  const pills = document.getElementById('dash-pills');
+  const content = document.getElementById('dashboard-content');
+  if(metingen.length===0){ pills.innerHTML=''; content.innerHTML='<div class="empty-state"><div class="icon">📭</div>Nog geen metingen.</div>'; return; }
+  const sorted = [...metingen].reverse();
+  if(!selectedDashId||!metingen.find(x=>x.id===selectedDashId)) selectedDashId=sorted[0].id;
+  pills.innerHTML = sorted.map(m=>`<span class="med-pill ${m.id===selectedDashId?'active':''}" onclick="selectDash('${m.id}')">
+    ${m.type==='check'?'🟡':'🟢'} ${m.label} <small style="color:var(--text-muted)">${m.datum}</small>
+  </span>`).join('');
+  const meting = metingen.find(x=>x.id===selectedDashId);
+  const btwNorm = meting.btwNorm||0;
+  const rows = MEDEWERKERS.map(m=>{
+    const md = meting.medewerkers[m]||{};
+    const urenIngevuld = md[URENVELD];
+    let anyOver = METRICS.some(metric=>{ const v=md[metric]; const n=getNorm(metric,btwNorm); return v!==null&&v!==undefined&&n>0&&v>n; });
+    const allNull = METRICS.every(metric=>md[metric]===null||md[metric]===undefined);
+    if(urenIngevuld===false) anyOver = true;
+    const st = allNull ? '<span class="status-badge">—</span>' : anyOver ? '<span class="status-badge status-red">Achterstand</span>' : '<span class="status-badge status-ok">Op koers</span>';
+    const urenCel = urenIngevuld===true ? `<td class="cell-ok">✓</td>` : urenIngevuld===false ? `<td class="cell-red">✕</td>` : `<td class="cell-empty">—</td>`;
+    return `<tr><td>${m}</td>${METRICS.map(metric=>{
+      const v=md[metric]; const n=getNorm(metric,btwNorm);
+      const cls=v===null||v===undefined?'cell-empty':(n>0&&v>n?'cell-red':'cell-ok');
+      return `<td class="${cls}">${v!==null&&v!==undefined?v:'—'}</td>`;
+    }).join('')}${urenCel}<td>${st}</td></tr>`;
+  }).join('');
+  const totals = METRICS.map(metric=>{
+    const s=MEDEWERKERS.reduce((a,m)=>{ const v=meting.medewerkers[m]?.[metric]; return a+(v!=null?v:0); },0);
+    return `<td style="font-weight:700;color:var(--gold)">${s}</td>`;
+  }).join('');
+  const urenTotaal = MEDEWERKERS.filter(m=>meting.medewerkers[m]?.[URENVELD]===true).length;
+  content.innerHTML=`<table class="dash-table"><thead><tr><th>Medewerker</th>${M_LABELS.map((l,i)=>`<th>${l}<br><small style="color:var(--border);font-weight:400">≤${i===4?(btwNorm||'—'):Object.values(normen)[i]}</small></th>`).join('')}<th>Uren<br><small style="color:var(--border);font-weight:400">ingevuld</small></th><th>Status</th></tr></thead>
+    <tbody>${rows}<tr style="border-top:2px solid var(--border)"><td style="color:var(--text-muted);font-size:10px;font-weight:600">TOTAAL</td>${totals}<td style="font-weight:700;color:var(--gold)">${urenTotaal}/${MEDEWERKERS.length}</td><td></td></tr></tbody></table>`;
+}
+function selectDash(id){ selectedDashId=id; renderDashboard(); }
+
+// ===== TREND & GRAFIEK =====
+function renderTrend(){
+  const content = document.getElementById('trend-diff-content');
+  const grafArea = document.getElementById('grafiek-area');
+  const msel = document.getElementById('trend-metric-select');
+
+  if(metingen.length<1){ grafArea.innerHTML='<div class="empty-state"><div class="icon">📈</div>Voeg minimaal 2 metingen toe.</div>'; content.innerHTML=''; msel.innerHTML=''; return; }
+
+  // Metric knoppen
+  msel.innerHTML = METRICS.map((m,i)=>`<button class="med-pill ${m===selectedTrendMetric?'active':''}" onclick="selectTrendMetric('${m}')">${M_LABELS[i]}</button>`).join('');
+
+  // SVG grafiek
+  buildGrafiek(grafArea);
+
+  // Verschilkaarten
+  if(metingen.length<2){ content.innerHTML='<div class="empty-state"><div class="icon">🔄</div>Voeg een tweede meting toe voor verschilkaarten.</div>'; return; }
+
+  const sorted = [...metingen].sort((a,b)=>a.datum.localeCompare(b.datum)||a.id.localeCompare(b.id));
+  const last = sorted[sorted.length-1];
+  const prev = sorted[sorted.length-2];
+
+  const cards = MEDEWERKERS.map(m=>{
+    const lastBtw = last.btwNorm||0;
+    const metricsHtml = METRICS.map((metric,i)=>{
+      const lv = last.medewerkers[m]?.[metric];
+      const pv = prev.medewerkers[m]?.[metric];
+      if(lv===null||lv===undefined) return '';
+      const norm = getNorm(metric,lastBtw);
+      const maxBar = norm*(M_MAX_FACTOR[i]||2);
+      const pct = Math.min(100,(lv/maxBar)*100);
+      const isOver = norm>0&&lv>norm;
+      const barCls = isOver?'bar-over':'bar-ok';
+      const valCls = isOver?'val-over':'val-ok';
+      let diffHtml = '—';
+      if(pv!==null&&pv!==undefined){
+        const d=lv-pv;
+        if(d<0) diffHtml=`<span class="diff-down">↓${Math.abs(d)}</span>`;
+        else if(d>0) diffHtml=`<span class="diff-up">↑${d}</span>`;
+        else diffHtml=`<span class="diff-same">→</span>`;
+      }
+      return `<div class="tdc-metric">
+        <span class="tdc-mn">${M_LABELS[i]}</span>
+        <div class="bar-wrap"><div class="bar-fill ${barCls}" style="width:${pct}%"></div></div>
+        <span class="tdc-val ${valCls}">${lv}</span>
+        <span class="tdc-diff">${diffHtml}</span>
+      </div>`;
+    }).join('');
+
+    const btwNorm = last.btwNorm||0;
+    const anyOver = METRICS.some(metric=>{ const v=last.medewerkers[m]?.[metric]; const n=getNorm(metric,btwNorm); return v!=null&&n>0&&v>n; });
+    const st = anyOver?'<span class="status-badge status-red" style="font-size:10px">Achterstand</span>':'<span class="status-badge status-ok" style="font-size:10px">Op koers</span>';
+
+    return `<div class="trend-diff-card"><div class="tdc-name">${m}${st}</div>${metricsHtml}</div>`;
+  }).join('');
+
+  content.innerHTML=`<p style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Laatste: <strong style="color:var(--white)">${last.label}</strong> (${last.datum}) vs vorige: <strong style="color:var(--text-muted)">${prev.label}</strong> (${prev.datum})</p><div class="trend-diff-grid">${cards}</div>`;
+}
+
+function selectTrendMetric(m){ selectedTrendMetric=m; renderTrend(); }
+
+function buildGrafiek(container){
+  const sorted = [...metingen].sort((a,b)=>a.datum.localeCompare(b.datum)||a.id.localeCompare(b.id));
+  if(sorted.length<1){ container.innerHTML=''; return; }
+
+  const metric = selectedTrendMetric;
+  const mi = METRICS.indexOf(metric);
+  const norm = normen[metric];
+
+  // Verzamel alle waarden voor schaling
+  let maxVal = norm * 1.2;
+  sorted.forEach(meting=>{
+    MEDEWERKERS.forEach(m=>{ const v=meting.medewerkers[m]?.[metric]; if(v!=null&&v>maxVal) maxVal=v; });
+  });
+
+  const W=900, H=260, PAD={top:20,right:20,bottom:60,left:48};
+  const gW=W-PAD.left-PAD.right, gH=H-PAD.top-PAD.bottom;
+  const n=sorted.length;
+  const xStep = n>1 ? gW/(n-1) : gW/2;
+
+  const colors=['#4caf7d','#e05252','#c9a84c','#5b9bd5','#a78bfa','#f97316','#22d3ee','#fb7185','#84cc16'];
+
+  const xOf = i => PAD.left + (n>1 ? i*xStep : gW/2);
+  const yOf = v => PAD.top + gH - (v/maxVal)*gH;
+
+  // Lijnen per medewerker
+  let lines='', dots='', labels='';
+
+  MEDEWERKERS.forEach((m,mi2)=>{
+    const col=colors[mi2%colors.length];
+    let path='';
+    sorted.forEach((meting,i)=>{
+      const v=meting.medewerkers[m]?.[metric];
+      if(v===null||v===undefined) return;
+      const x=xOf(i), y=yOf(v);
+      path += path==='' ? `M${x},${y}` : ` L${x},${y}`;
+      dots+=`<circle cx="${x}" cy="${y}" r="4" fill="${col}" stroke="var(--navy-mid)" stroke-width="1.5">
+        <title>${m}: ${v} (${meting.label})</title></circle>`;
+    });
+    if(path) lines+=`<path d="${path}" fill="none" stroke="${col}" stroke-width="2" opacity="0.85"/>`;
+    // Label rechts
+    const lastMeting = [...sorted].reverse().find(mt=>mt.medewerkers[m]?.[metric]!=null);
+    if(lastMeting){
+      const li=sorted.indexOf(lastMeting);
+      const v=lastMeting.medewerkers[m][metric];
+      labels+=`<text x="${xOf(li)+6}" y="${yOf(v)+4}" fill="${col}" font-size="10" font-family="Inter,sans-serif">${m}</text>`;
+    }
+  });
+
+  // Norm lijn
+  const ny=yOf(norm);
+  const normLine=`<line x1="${PAD.left}" y1="${ny}" x2="${PAD.left+gW}" y2="${ny}" stroke="var(--red)" stroke-width="1" stroke-dasharray="6,3" opacity="0.6"/>
+    <text x="${PAD.left+4}" y="${ny-4}" fill="var(--red)" font-size="10" font-family="Inter,sans-serif">norm ${norm}</text>`;
+
+  // X-as labels
+  const xLabels = sorted.map((mt,i)=>`<text x="${xOf(i)}" y="${H-PAD.bottom+18}" text-anchor="middle" fill="var(--text-muted)" font-size="10" font-family="Inter,sans-serif">${mt.label.replace('Weekstart ','W').replace('start ','')}</text>
+    <text x="${xOf(i)}" y="${H-PAD.bottom+30}" text-anchor="middle" fill="var(--border)" font-size="9" font-family="Inter,sans-serif">${mt.type==='week'?'⬛':'◇'} ${mt.datum.slice(5)}</text>`).join('');
+
+  // Y-as
+  const yTicks=[0,Math.round(maxVal*0.25),Math.round(maxVal*0.5),Math.round(maxVal*0.75),Math.round(maxVal)];
+  const yAxis = yTicks.map(v=>`<line x1="${PAD.left-4}" y1="${yOf(v)}" x2="${PAD.left+gW}" y2="${yOf(v)}" stroke="var(--border)" stroke-width="0.5"/>
+    <text x="${PAD.left-8}" y="${yOf(v)+4}" text-anchor="end" fill="var(--text-muted)" font-size="10" font-family="Inter,sans-serif">${v}</text>`).join('');
+
+  container.innerHTML=`<div class="grafiek-wrap"><svg class="grafiek-svg" viewBox="0 0 ${W} ${H}" width="100%" xmlns="http://www.w3.org/2000/svg">
+    <rect width="${W}" height="${H}" fill="var(--navy-mid)" rx="8"/>
+    ${yAxis}${normLine}${lines}${dots}${labels}${xLabels}
+    <text x="${PAD.left}" y="14" fill="var(--gold)" font-size="11" font-weight="600" font-family="Inter,sans-serif">${M_LABELS[mi]} — alle medewerkers · ⬛=weekstart ◇=tussentijdse check</text>
+  </svg></div>`;
+}
+
+// ===== STRUCTUREEL =====
+function renderStructureel(){
+  const content = document.getElementById('struct-content');
+  const weekMetingen = metingen.filter(m=>m.type==='week').sort((a,b)=>a.datum.localeCompare(b.datum));
+  if(weekMetingen.length<2){ content.innerHTML='<div class="empty-state"><div class="icon">🔍</div>Voeg minimaal 2 weekstartmetingen toe voor structurele analyse.</div>'; return; }
+
+  const last4 = weekMetingen.slice(-4);
+
+  const rows = MEDEWERKERS.map(m=>{
+    let wekenOver=0;
+    let wekenUrenNiet=0;
+    const dots = last4.map(mt=>{
+      const md=mt.medewerkers[m]||{};
+      const btwNorm=mt.btwNorm||0;
+      const hasSome=METRICS.some(metric=>md[metric]!=null);
+      let isOver=METRICS.some(metric=>{ const v=md[metric]; const n=getNorm(metric,btwNorm); return v!=null&&n>0&&v>n; });
+      if(md[URENVELD]===false){ isOver=true; wekenUrenNiet++; }
+      if(isOver) wekenOver++;
+      if(!hasSome) return `<span class="week-dot dot-empty" title="${mt.label}"></span>`;
+      return `<span class="week-dot ${isOver?'dot-red':'dot-green'}" title="${mt.label}: ${isOver?'boven norm':'op koers'}"></span>`;
+    }).join('');
+
+    // Meest voorkomende overschrijding
+    const overCounts={};
+    METRICS.forEach(metric=>{
+      overCounts[metric]=last4.filter(mt=>{ const v=mt.medewerkers[m]?.[metric]; const n=getNorm(metric,mt.btwNorm||0); return v!=null&&n>0&&v>n; }).length;
+    });
+    let topMetrics=METRICS.filter(metric=>overCounts[metric]>0).sort((a,b)=>overCounts[b]-overCounts[a]).slice(0,2).map(metric=>M_LABELS[METRICS.indexOf(metric)]).join(', ')||'—';
+    if(wekenUrenNiet>0){ topMetrics = topMetrics==='—' ? `Uren niet ingevuld (${wekenUrenNiet}x)` : `${topMetrics}, Uren niet ingevuld (${wekenUrenNiet}x)`; }
+
+    // Trend eerste vs laatste weekmeting
+    let trend='—';
+    if(last4.length>=2){
+      const first=last4[0], last=last4[last4.length-1];
+      const fo=METRICS.filter(metric=>{ const v=first.medewerkers[m]?.[metric]; const n=getNorm(metric,first.btwNorm||0); return v!=null&&n>0&&v>n; }).length;
+      const lo=METRICS.filter(metric=>{ const v=last.medewerkers[m]?.[metric]; const n=getNorm(metric,last.btwNorm||0); return v!=null&&n>0&&v>n; }).length;
+      if(lo>fo) trend='<span style="color:var(--red)">↑ Verslechtert</span>';
+      else if(lo<fo) trend='<span style="color:var(--green)">↓ Verbetert</span>';
+      else trend='<span style="color:var(--gold)">→ Stabiel</span>';
+    }
+
+    let st='';
+    if(wekenOver>=3) st='<span class="status-badge status-red">Structureel risico</span>';
+    else if(wekenOver===2) st='<span class="status-badge status-warn">Aandacht nodig</span>';
+    else if(wekenOver===0) st='<span class="status-badge status-ok">Op koers</span>';
+    else st='<span class="status-badge" style="background:var(--navy-light);color:var(--text-muted);border:1px solid var(--border)">Let op</span>';
+
+    return `<tr><td style="font-weight:700">${m}</td>
+      <td><div class="week-dots">${dots}</div></td>
+      <td style="font-weight:600;color:${wekenOver>=3?'var(--red)':wekenOver>=2?'var(--gold)':'var(--green)'}">${wekenOver}/${last4.length}</td>
+      <td style="color:var(--text-muted);font-size:12px">${topMetrics}</td>
+      <td>${trend}</td><td>${st}</td></tr>`;
+  }).join('');
+
+  content.innerHTML=`<p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Op basis van de laatste ${last4.length} weekstartmetingen: ${last4.map(m=>m.label).join(', ')}</p>
+    <table class="struct-table"><thead><tr>
+      <th>Medewerker</th><th>Weken</th><th>Boven norm</th><th>Meest voorkomend</th><th>Trend</th><th>Status</th>
+    </tr></thead><tbody>${rows}</tbody></table>
+    <p style="margin-top:16px;font-size:12px;color:var(--text-muted);border-top:1px solid var(--border);padding-top:12px">
+      🔴 3+ weken boven norm = structureel risico &nbsp;|&nbsp; 🟡 2 weken = aandacht &nbsp;|&nbsp; 🟢 0–1 week = op koers<br>
+      <em style="font-size:11px">Tussentijdse checks tellen niet mee in structurele analyse — alleen weekstartmetingen.</em>
+    </p>`;
+}
+
+// ===== EXPORT / IMPORT =====
+function exportData(){
+  const payload = {
+    versie: 2,
+    exportDatum: new Date().toISOString().slice(0,10),
+    exportDoor: 'BB Tracker',
+    normen,
+    metingen
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `BB_Tracker_data_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const payload = JSON.parse(e.target.result);
+      if(!payload.metingen) throw new Error('Ongeldig bestand');
+
+      // Samenvoegen: bestaande metingen + nieuwe, duplicaten op id overslaan
+      const bestaandeIds = new Set(metingen.map(m=>m.id));
+      let nieuw = 0;
+      payload.metingen.forEach(m=>{
+        if(!bestaandeIds.has(m.id)){ metingen.push(m); nieuw++; }
+      });
+
+      // Normen overnemen als ze er in zitten
+      if(payload.normen) {
+        normen = payload.normen;
+        localStorage.setItem('bb_normen', JSON.stringify(normen));
+        updateNormUI();
+      }
+
+      localStorage.setItem('bb_metingen2', JSON.stringify(metingen));
+      event.target.value = '';
+
+      const totaal = payload.metingen.length;
+      const bestaand = totaal - nieuw;
+      alert(`✓ Import geslaagd\n\n${nieuw} nieuwe meting(en) toegevoegd\n${bestaand} al aanwezig (overgeslagen)\n\nTotaal: ${metingen.length} meting(en) in de tracker`);
+    } catch(err) {
+      alert('Fout bij importeren: ' + err.message + '\n\nZorg dat je een geldig BB Tracker .json bestand gebruikt.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ===== RAPPORTEN =====
+function renderRapporten(){
+  const sel = document.getElementById('rapport-meting-select');
+  const content = document.getElementById('rapporten-content');
+
+  // Dropdown vullen
+  if(metingen.length===0){
+    sel.innerHTML='<option>Geen metingen</option>';
+    content.innerHTML='<div class="empty-state"><div class="icon">📄</div>Nog geen metingen beschikbaar.</div>';
+    return;
+  }
+  const sorted = [...metingen].sort((a,b)=>b.datum.localeCompare(a.datum)||b.id.localeCompare(a.id));
+  const currentVal = sel.value;
+  sel.innerHTML = sorted.map(m=>`<option value="${m.id}">${m.type==='week'?'🟢':'🟡'} ${m.label} (${m.datum})</option>`).join('');
+  if(currentVal && sorted.find(m=>m.id===currentVal)) sel.value = currentVal;
+
+  const metingId = sel.value;
+  const meting = metingen.find(m=>m.id===metingId);
+  if(!meting){ content.innerHTML=''; return; }
+
+  // Vorige meting voor vergelijking
+  const allSorted = [...metingen].sort((a,b)=>a.datum.localeCompare(b.datum)||a.id.localeCompare(b.id));
+  const metingIdx = allSorted.findIndex(m=>m.id===metingId);
+  const prevMeting = metingIdx>0 ? allSorted[metingIdx-1] : null;
+
+  // Alle metingen van deze persoon voor sparkline
+  const ICONS = { trans:'📋', vragen:'❓', radar:'📌', kwal:'✅', btw:'🧾' };
+  const btwNorm = meting.btwNorm||0;
+
+  const rapporten = MEDEWERKERS.map(naam=>{
+    const md = meting.medewerkers[naam]||{};
+    const prevMd = prevMeting ? (prevMeting.medewerkers[naam]||{}) : null;
+    const hasSome = METRICS.some(metric=>md[metric]!=null);
+
+    // Metrics kaarten
+    const metricKaarten = METRICS.map((metric,i)=>{
+      const v = md[metric];
+      const norm = getNorm(metric, btwNorm);
+      if(v===null||v===undefined) return `<div class="rapport-metric-kaart">
+        <div class="rmk-icon">${ICONS[metric]}</div>
+        <div class="rmk-label">${M_LABELS[i]}</div>
+        <div class="rmk-waarde" style="color:#243450">—</div>
+        <div class="rmk-norm">norm ≤ ${norm||'—'}</div>
+      </div>`;
+
+      const isOver = norm>0 && v>norm;
+      const isWarn = norm>0 && v===norm;
+      const kleur = isOver ? 'rood' : isWarn ? 'goud' : 'groen';
+      const pct = norm>0 ? Math.min(100,(v/norm)*100) : 0;
+      const barColor = isOver ? '#e05252' : isWarn ? '#c9a84c' : '#4caf7d';
+
+      // Verschil tov vorige
+      let diffHtml = '';
+      if(prevMd && prevMd[metric]!=null){
+        const d = v - prevMd[metric];
+        if(d<0) diffHtml=`<span class="rmk-badge" style="color:#4caf7d">↓${Math.abs(d)}</span>`;
+        else if(d>0) diffHtml=`<span class="rmk-badge" style="color:#e05252">↑${d}</span>`;
+        else diffHtml=`<span class="rmk-badge" style="color:#7a94b0">→</span>`;
+      }
+
+      return `<div class="rapport-metric-kaart ${kleur}">
+        ${diffHtml}
+        <div class="rmk-icon">${ICONS[metric]}</div>
+        <div class="rmk-label">${M_LABELS[i]}</div>
+        <div class="rmk-waarde ${kleur}">${v}</div>
+        <div class="rmk-norm">norm ≤ ${norm||'—'}</div>
+        <div class="rapport-bar-wrap"><div class="rapport-bar" style="width:${pct}%;background:${barColor}"></div></div>
+      </div>`;
+    }).join('');
+
+    // Uren-kaart
+    const urenWaarde = md[URENVELD];
+    const urenKaartKleur = urenWaarde===true ? 'groen' : urenWaarde===false ? 'rood' : '';
+    const urenKaartTekst = urenWaarde===true ? 'Ja' : urenWaarde===false ? 'Nee' : '—';
+    const urenKaart = `<div class="rapport-metric-kaart ${urenKaartKleur}">
+      <div class="rmk-icon">🕒</div>
+      <div class="rmk-label">Uren ingevuld</div>
+      <div class="rmk-waarde ${urenKaartKleur}" style="font-size:22px">${urenKaartTekst}</div>
+      <div class="rmk-norm">vorige week</div>
+    </div>`;
+    const metricKaartenMetUren = metricKaarten + urenKaart;
+
+    // Conclusie tekst
+    const overMetrics = METRICS.filter(metric=>{ const v=md[metric]; const n=getNorm(metric,btwNorm); return v!=null&&n>0&&v>n; });
+    const binnenMetrics = METRICS.filter(metric=>{ const v=md[metric]; const n=getNorm(metric,btwNorm); return v!=null&&n>0&&v<=n; });
+    let conclusieTekst = '';
+    if(!hasSome){
+      conclusieTekst = 'Geen gegevens beschikbaar voor deze meting.';
+    } else if(overMetrics.length===0 && urenWaarde!==false){
+      conclusieTekst = `<strong>Alle onderdelen binnen norm.</strong> Goed ritme — vasthouden en overzicht bewaken.`;
+    } else {
+      const overNamen = overMetrics.map(m=>M_LABELS[METRICS.indexOf(m)]).join(', ');
+      let extra = '';
+      if(urenWaarde===false) extra = overNamen ? ' Daarnaast zijn de uren van vorige week nog niet ingevuld.' : 'Uren van vorige week zijn nog niet ingevuld.';
+      if(overMetrics.length>0){
+        const topMetric = overMetrics[0];
+        const topV = md[topMetric];
+        const topN = getNorm(topMetric, btwNorm);
+        const topOver = topV - topN;
+        conclusieTekst = `<strong>Achterstand zichtbaar op: ${overNamen}.</strong> Eerste prioriteit: ${M_LABELS[METRICS.indexOf(topMetric)]} terugbrengen (${topV} → norm ≤ ${topN}, verschil: ${topOver}).${extra}`;
+      } else {
+        conclusieTekst = `<strong>Achterstand zichtbaar.</strong> ${extra}`;
+      }
+    }
+
+    // Status
+    const anyOver = overMetrics.length > 0 || urenWaarde===false;
+    const statusKleur = !hasSome ? '#7a94b0' : anyOver ? '#e05252' : '#4caf7d';
+    const statusBg = !hasSome ? '#243450' : anyOver ? '#2a1515' : '#0f2a1c';
+    const statusBorder = !hasSome ? '#243450' : anyOver ? '#e05252' : '#4caf7d';
+    const statusTekst = !hasSome ? '—' : anyOver ? 'Achterstand zichtbaar' : 'Binnen norm';
+
+    // Mini sparkline SVG voor alle weekmetingen van deze persoon
+    const weekMets = [...metingen].filter(mt=>mt.type==='week').sort((a,b)=>a.datum.localeCompare(b.datum));
+    let sparkHtml = '';
+    if(weekMets.length>=2){
+      const W=320,H=60,PAD={t:8,r:8,b:20,l:30};
+      const gW=W-PAD.l-PAD.r, gH=H-PAD.t-PAD.b;
+      const n=weekMets.length;
+      // Toon alleen transacties als voorbeeld in sparkline
+      const metric='trans';
+      const vals = weekMets.map(mt=>mt.medewerkers[naam]?.[metric]??null);
+      const maxV = Math.max(normen.trans*1.2, ...vals.filter(v=>v!=null));
+      const xOf=i=>PAD.l+(n>1?i*gW/(n-1):gW/2);
+      const yOf=v=>PAD.t+gH-(v/maxV)*gH;
+      let path=''; let pts='';
+      vals.forEach((v,i)=>{ if(v==null)return; path+=path?` L${xOf(i)},${yOf(v)}`:`M${xOf(i)},${yOf(v)}`; const c=v>normen.trans?'#e05252':'#4caf7d'; pts+=`<circle cx="${xOf(i)}" cy="${yOf(v)}" r="3" fill="${c}"/>`; });
+      const ny=yOf(normen.trans);
+      sparkHtml=`<div class="rapport-sparkline-wrap">
+        <div class="rapport-sparkline-titel">Transacties trend (weekstarts)</div>
+        <svg viewBox="0 0 ${W} ${H}" width="100%" xmlns="http://www.w3.org/2000/svg" style="background:#0d1b2a;border-radius:6px">
+          <line x1="${PAD.l}" y1="${ny}" x2="${PAD.l+gW}" y2="${ny}" stroke="#e05252" stroke-width="1" stroke-dasharray="4,3" opacity="0.5"/>
+          <text x="${PAD.l+2}" y="${ny-2}" fill="#e05252" font-size="8" font-family="Inter,sans-serif">norm</text>
+          ${path?`<path d="${path}" fill="none" stroke="#5b9bd5" stroke-width="1.5"/>`:''}
+          ${pts}
+          ${weekMets.map((mt,i)=>`<text x="${xOf(i)}" y="${H-4}" text-anchor="middle" fill="#7a94b0" font-size="7" font-family="Inter,sans-serif">${mt.datum.slice(5)}</text>`).join('')}
+        </svg>
+      </div>`;
+    }
+
+    return `<div class="rapport-persoon" id="rapport-${naam.replace(/[^a-z]/gi,'_')}">
+      <div class="rapport-header">
+        <div>
+          <div class="rapport-naam">${naam}</div>
+          <div class="rapport-meta">${meting.label} · ${meting.datum}${prevMeting?` · vergelijking: ${prevMeting.label}`:''}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="rapport-status-groot" style="background:${statusBg};color:${statusKleur};border:1.5px solid ${statusBorder}">${statusTekst}</span>
+          <button class="rapport-print-btn" onclick="printRapport('${naam.replace(/[^a-z]/gi,'_')}')">🖨️ Print</button>
+        </div>
+      </div>
+      <div class="rapport-body">
+        <div class="rapport-metrics-grid">${metricKaartenMetUren}</div>
+        <div class="rapport-conclusie">${conclusieTekst}</div>
+        ${sparkHtml}
+      </div>
+      <div class="rapport-footer-bb">
+        <span>Buro Burmanje — Werkvoorraad Tracker</span>
+        <span>${meting.datum}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  content.innerHTML = rapporten;
+}
+
+function printRapport(naamId){
+  // Verberg alle andere rapporten tijdelijk
+  document.querySelectorAll('.rapport-persoon').forEach(el=>{
+    el.style.display = el.id==='rapport-'+naamId ? '' : 'none';
+  });
+  window.print();
+  document.querySelectorAll('.rapport-persoon').forEach(el=>el.style.display='');
+}
+
+function printAlleRapporten(){
+  window.print();
+}
+
+// ===== INSTELLINGEN =====
+const APPS_SCRIPT_CODE = `// BB Werkvoorraad Tracker — Google Apps Script
+// Plak dit in: Google Sheet → Extensies → Apps Script
+
+const SHEET_NAAM = 'BB_Data';
+
+function doGet(e) { return behandelVerzoek(e); }
+function doPost(e) { return behandelVerzoek(e); }
+
+function behandelVerzoek(e) {
+  const sheet = getOfMaakSheet();
+  try {
+    if (e.parameter && e.parameter.actie === 'laden') {
+      return jsonAntwoord(laadData(sheet));
+    }
+    const body = JSON.parse(e.postData.contents);
+    if (body.actie === 'opslaan') {
+      slaOpData(sheet, body);
+      return jsonAntwoord({ ok: true });
+    }
+    return jsonAntwoord({ fout: 'Onbekende actie' });
+  } catch(err) {
+    return jsonAntwoord({ fout: err.message });
+  }
+}
+
+function getOfMaakSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_NAAM);
+  if (!sheet) { sheet = ss.insertSheet(SHEET_NAAM); sheet.getRange('A1').setValue('{}'); }
+  return sheet;
+}
+
+function laadData(sheet) {
+  const waarde = sheet.getRange('A1').getValue();
+  if (!waarde) return { metingen: [], normen: {} };
+  return JSON.parse(waarde);
+}
+
+function slaOpData(sheet, body) {
+  sheet.getRange('A1').setValue(JSON.stringify({ metingen: body.metingen || [], normen: body.normen || {} }));
+  maakLeesbareTabel(body);
+}
+
+function maakLeesbareTabel(body) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let overzicht = ss.getSheetByName('Overzicht');
+  if (!overzicht) overzicht = ss.insertSheet('Overzicht');
+  overzicht.clearContents();
+  const headers = ['Datum','Label','Type','Medewerker','Transacties','Vragen','Taken Radar','Kwal.controls','BTW','BTW-norm','Uren ingevuld'];
+  overzicht.getRange(1,1,1,headers.length).setValues([headers]);
+  overzicht.getRange(1,1,1,headers.length).setBackground('#162436').setFontColor('#c9a84c').setFontWeight('bold');
+  const rijen = [];
+  const medewerkers = ['Cennet','Dennis','Gerjan','Iris','Melvin','Mike','Natasja','René','Thom'];
+  (body.metingen||[]).forEach(m=>{
+    medewerkers.forEach(naam=>{
+      const md = m.medewerkers[naam]||{};
+      const urenTekst = md.uren===true?'Ja':md.uren===false?'Nee':'';
+      rijen.push([m.datum,m.label,m.type==='week'?'Weekstart':'Check',naam,md.trans??'',md.vragen??'',md.radar??'',md.kwal??'',md.btw??'',m.btwNorm||'',urenTekst]);
+    });
+  });
+  if(rijen.length>0) overzicht.getRange(2,1,rijen.length,headers.length).setValues(rijen);
+}
+
+function jsonAntwoord(data) {
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}`;
+
+function kopieerScript(){
+  navigator.clipboard.writeText(APPS_SCRIPT_CODE).then(()=>{
+    const btn = event.target;
+    btn.textContent='✓ Gekopieerd'; btn.style.color='var(--green)';
+    setTimeout(()=>{ btn.textContent='Kopieer'; btn.style.color='var(--gold)'; },2000);
+  });
+}
+
+function renderInstellingen(){
+  const el = document.getElementById('apps-script-code');
+  if(el) el.textContent = APPS_SCRIPT_CODE;
+  const urlInp = document.getElementById('inp-script-url');
+  if(urlInp) urlInp.value = localStorage.getItem('bb_script_url')||'';
+}
+
+// ===== NAVIGATIE =====
+function showTab(name, btn){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='historie') renderHistorie();
+  if(name==='dashboard') renderDashboard();
+  if(name==='trend') renderTrend();
+  if(name==='structureel') renderStructureel();
+  if(name==='rapporten') renderRapporten();
+  if(name==='instellingen') renderInstellingen();
+}
+
+init();
+</script>
+</body>
+</html>
