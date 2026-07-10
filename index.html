@@ -33,7 +33,8 @@
   /* TYPE BADGE */
   .type-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
   .type-btn{padding:6px 16px;border-radius:20px;border:1px solid var(--border);background:var(--navy-light);color:var(--text-muted);font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .15s;font-weight:500;}
-  .type-btn.active-week{background:#0f2a1c;color:var(--green);border-color:var(--green);}
+  .type-btn.active-week{background:#0f1a2a;color:#5b9bd5;border-color:#5b9bd5;}
+  .type-btn.active-ijk{background:#0f2a1c;color:var(--green);border-color:var(--green);}
   .type-btn.active-check{background:#1a1500;color:var(--gold);border-color:var(--gold);}
   .type-label{font-size:11px;color:var(--text-muted);font-weight:500;}
 
@@ -286,7 +287,8 @@
 
     <div class="type-row">
       <span class="type-label">Type meting:</span>
-      <button class="type-btn active-week" id="btn-week" onclick="setType('week')">🟢 Weekstart (maandag)</button>
+      <button class="type-btn active-week" id="btn-week" onclick="setType('week')">🔵 Maandag weekplanning</button>
+      <button class="type-btn" id="btn-ijk" onclick="setType('ijk')">🟢 Vrijdag ijkmoment</button>
       <button class="type-btn" id="btn-check" onclick="setType('check')">🟡 Tussentijdse check</button>
     </div>
 
@@ -553,6 +555,7 @@ function updateNormUI(){
 function setType(t){
   currentType = t;
   document.getElementById('btn-week').className = 'type-btn' + (t==='week'?' active-week':'');
+  document.getElementById('btn-ijk').className = 'type-btn' + (t==='ijk'?' active-ijk':'');
   document.getElementById('btn-check').className = 'type-btn' + (t==='check'?' active-check':'');
   suggestLabel();
   updateVorigeInfo();
@@ -566,9 +569,9 @@ function suggestLabel(){
   const dagen = ['Zondag','Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag'];
   const dag = dagen[d.getDay()];
   const week = getWeekNr(d);
-  document.getElementById('inp-label').value = currentType==='week'
-    ? `Weekstart W${week}`
-    : `${dag} check W${week}`;
+  if(currentType==='week') document.getElementById('inp-label').value = `Weekplanning W${week}`;
+  else if(currentType==='ijk') document.getElementById('inp-label').value = `Vrijdag ijkmoment W${week}`;
+  else document.getElementById('inp-label').value = `${dag} check W${week}`;
 }
 
 document.getElementById('inp-datum').addEventListener('change', suggestLabel);
@@ -752,7 +755,7 @@ function renderHistorie(){
   const sorted = [...metingen].reverse();
   el.innerHTML = '<div class="hist-list">'
     + sorted.map(m=>`<div class="hist-item ${m.id===selectedHistId?'selected':''}" onclick="showHistDetail('${m.id}')">
-        <span class="hi-type ${m.type==='week'?'hi-type-week':'hi-type-check'}">${m.type==='week'?'WEEK':'CHECK'}</span>
+        <span class="hi-type ${m.type==='ijk'?'hi-type-week':m.type==='week'?'hi-type-week':'hi-type-check'}">${m.type==='ijk'?'VRIJDAG':m.type==='week'?'MAANDAG':'CHECK'}</span>
         <span class="hi-label">${m.label}</span>
         <span class="hi-date">${m.datum}</span>
         <button class="btn-danger" onclick="deleteMeting('${m.id}',event)">✕</button>
@@ -810,6 +813,7 @@ function bewerkMeting(id){
   // Type instellen
   currentType = m.type;
   document.getElementById('btn-week').className = 'type-btn' + (m.type==='week'?' active-week':'');
+  document.getElementById('btn-ijk').className = 'type-btn' + (m.type==='ijk'?' active-ijk':'');
   document.getElementById('btn-check').className = 'type-btn' + (m.type==='check'?' active-check':'');
 
   // Velden invullen
@@ -876,7 +880,7 @@ function renderDashboard(){
   const sorted = [...metingen].reverse();
   if(!selectedDashId||!metingen.find(x=>x.id===selectedDashId)) selectedDashId=sorted[0].id;
   pills.innerHTML = sorted.map(m=>`<span class="med-pill ${m.id===selectedDashId?'active':''}" onclick="selectDash('${m.id}')">
-    ${m.type==='check'?'🟡':'🟢'} ${m.label} <small style="color:var(--text-muted)">${m.datum}</small>
+    ${m.type==='ijk'?'🟢':m.type==='week'?'🔵':'🟡'} ${m.label} <small style="color:var(--text-muted)">${m.datum}</small>
   </span>`).join('');
   const meting = metingen.find(x=>x.id===selectedDashId);
   const btwNorm = meting.btwNorm||0;
@@ -1019,7 +1023,7 @@ function buildGrafiek(container){
 
   // X-as labels
   const xLabels = sorted.map((mt,i)=>`<text x="${xOf(i)}" y="${H-PAD.bottom+18}" text-anchor="middle" fill="var(--text-muted)" font-size="10" font-family="Inter,sans-serif">${mt.label.replace('Weekstart ','W').replace('start ','')}</text>
-    <text x="${xOf(i)}" y="${H-PAD.bottom+30}" text-anchor="middle" fill="var(--border)" font-size="9" font-family="Inter,sans-serif">${mt.type==='week'?'⬛':'◇'} ${mt.datum.slice(5)}</text>`).join('');
+    <text x="${xOf(i)}" y="${H-PAD.bottom+30}" text-anchor="middle" fill="var(--border)" font-size="9" font-family="Inter,sans-serif">${mt.type==='ijk'?'🟢':mt.type==='week'?'🔵':'◇'} ${mt.datum.slice(5)}</text>`).join('');
 
   // Y-as
   const yTicks=[0,Math.round(maxVal*0.25),Math.round(maxVal*0.5),Math.round(maxVal*0.75),Math.round(maxVal)];
@@ -1036,8 +1040,8 @@ function buildGrafiek(container){
 // ===== STRUCTUREEL =====
 function renderStructureel(){
   const content = document.getElementById('struct-content');
-  const weekMetingen = metingen.filter(m=>m.type==='week').sort((a,b)=>a.datum.localeCompare(b.datum));
-  if(weekMetingen.length<2){ content.innerHTML='<div class="empty-state"><div class="icon">🔍</div>Voeg minimaal 2 weekstartmetingen toe voor structurele analyse.</div>'; return; }
+  const weekMetingen = metingen.filter(m=>m.type==='ijk').sort((a,b)=>a.datum.localeCompare(b.datum));
+  if(weekMetingen.length<2){ content.innerHTML='<div class="empty-state"><div class="icon">🔍</div>Voeg minimaal 2 vrijdag ijkmoment-metingen toe voor structurele analyse.</div>'; return; }
 
   const last4 = weekMetingen.slice(-4);
 
@@ -1093,7 +1097,7 @@ function renderStructureel(){
     </tr></thead><tbody>${rows}</tbody></table>
     <p style="margin-top:16px;font-size:12px;color:var(--text-muted);border-top:1px solid var(--border);padding-top:12px">
       🔴 3+ weken boven norm = structureel risico &nbsp;|&nbsp; 🟡 2 weken = aandacht &nbsp;|&nbsp; 🟢 0–1 week = op koers<br>
-      <em style="font-size:11px">Tussentijdse checks tellen niet mee in structurele analyse — alleen weekstartmetingen.</em>
+      <em style="font-size:11px">Tussentijdse checks en maandagplanningen tellen niet mee in structurele analyse — alleen vrijdag ijkmomenten.</em>
     </p>`;
 }
 
@@ -1164,7 +1168,7 @@ function renderRapporten(){
   }
   const sorted = [...metingen].sort((a,b)=>b.datum.localeCompare(a.datum)||b.id.localeCompare(a.id));
   const currentVal = sel.value;
-  sel.innerHTML = sorted.map(m=>`<option value="${m.id}">${m.type==='week'?'🟢':'🟡'} ${m.label} (${m.datum})</option>`).join('');
+  sel.innerHTML = sorted.map(m=>`<option value="${m.id}">${m.type==='ijk'?'🟢':m.type==='week'?'🔵':'🟡'} ${m.label} (${m.datum})</option>`).join('');
   if(currentVal && sorted.find(m=>m.id===currentVal)) sel.value = currentVal;
 
   const metingId = sel.value;
@@ -1264,7 +1268,7 @@ function renderRapporten(){
     const statusTekst = !hasSome ? '—' : anyOver ? 'Achterstand zichtbaar' : 'Binnen norm';
 
     // Mini sparkline SVG voor alle weekmetingen van deze persoon
-    const weekMets = [...metingen].filter(mt=>mt.type==='week').sort((a,b)=>a.datum.localeCompare(b.datum));
+    const weekMets = [...metingen].filter(mt=>mt.type==='ijk').sort((a,b)=>a.datum.localeCompare(b.datum));
     let sparkHtml = '';
     if(weekMets.length>=2){
       const W=320,H=60,PAD={t:8,r:8,b:20,l:30};
@@ -1388,7 +1392,7 @@ function maakLeesbareTabel(body) {
     medewerkers.forEach(naam=>{
       const md = m.medewerkers[naam]||{};
       const urenTekst = md.uren===true?'Ja':md.uren===false?'Nee':'';
-      rijen.push([m.datum,m.label,m.type==='week'?'Weekstart':'Check',naam,md.trans??'',md.vragen??'',md.radar??'',md.kwal??'',md.btw??'',m.btwNorm||'',urenTekst]);
+      rijen.push([m.datum,m.label,m.type==='ijk'?'Vrijdag ijkmoment':m.type==='week'?'Maandag planning':'Check',naam,md.trans??'',md.vragen??'',md.radar??'',md.kwal??'',md.btw??'',m.btwNorm||'',urenTekst]);
     });
   });
   if(rijen.length>0) overzicht.getRange(2,1,rijen.length,headers.length).setValues(rijen);
