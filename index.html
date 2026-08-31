@@ -454,7 +454,19 @@
   <div class="card">
     <div class="card-title">📅 Maandelijkse boekingen per medewerker</div>
 
-    <!-- Invoer sectie -->
+    <!-- NAMEN BEHEER -->
+    <div style="background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;">
+      <div style="font-size:12px;color:var(--gold);font-weight:600;margin-bottom:12px;">📋 Namen beheren</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+        <button class="btn-secondary" onclick="document.getElementById('excel-upload').click()">📥 Importeer uit Excel</button>
+        <input type="file" id="excel-upload" accept=".xlsx,.xls" style="display:none" onchange="importeerExcel(event)">
+        <button class="btn-secondary" onclick="importeerHistorischeData()">📥 Laad ingebakken data (2021-2026)</button>
+        <button class="btn-danger" onclick="if(confirm('Alle boekingen wissen?')){boekingen={};localStorage.setItem(\'bb_boekingen\',\'{}\');renderBoekingen();renderNamenBeheer();}" style="margin-left:auto;">🗑 Alles wissen</button>
+      </div>
+      <div id="namen-beheer-content"></div>
+    </div>
+
+    <!-- INVOER sectie -->
     <div style="background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;">
       <div style="font-size:12px;color:var(--gold);font-weight:600;margin-bottom:12px;">Invoer — ook historisch</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
@@ -483,8 +495,7 @@
 
       <div class="btn-row" style="margin-top:12px;">
         <button class="btn-primary" onclick="slaBoekingOp()">Opslaan</button>
-        <button class="btn-secondary" onclick="voegOudMedewerkerToe()">+ Oud-medewerker toevoegen</button>
-              <button class="btn-secondary" onclick="importeerHistorischeData()" style="margin-left:auto;">📥 Importeer historische data (2021-2026)</button>
+        <button class="btn-secondary" onclick="voegOudMedewerkerToe()">+ Naam toevoegen</button>
         <span class="save-msg" id="boek-save-msg">✓ Opgeslagen</span>
       </div>
     </div>
@@ -1552,11 +1563,179 @@ function showTab(name, btn){
   if(name==='boekingen'){ renderBoekingen(); }
 }
 
+// ===== NAMEN BEHEER =====
+function renderNamenBeheer(){
+  const el = document.getElementById('namen-beheer-content');
+  if(!el) return;
+
+  // Verzamel alle namen in de boekingen
+  const alleNamen = new Set();
+  Object.values(boekingen).forEach(m => Object.keys(m).forEach(n => alleNamen.add(n)));
+
+  if(alleNamen.size === 0){
+    el.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">Nog geen boekingen. Importeer data of voeg handmatig toe.</div>';
+    return;
+  }
+
+  const sorted = [...alleNamen].sort();
+  const team = new Set(MEDEWERKERS);
+
+  el.innerHTML = `
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">
+      Alle namen in de boekingen — hernoem, voeg samen of verwijder. 
+      <strong style="color:var(--gold)">Huidig team</strong> = goudkleurig. Oud-medewerkers = grijs.
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:6px;">
+      ${sorted.map(naam => {
+        const isTeam = team.has(naam);
+        const kleur = isTeam ? 'var(--gold)' : 'var(--text-muted)';
+        const border = isTeam ? 'var(--gold)' : 'var(--border)';
+        return `<div style="display:flex;align-items:center;gap:6px;background:var(--navy);border:1px solid ${border};border-radius:6px;padding:6px 10px;">
+          <span style="font-size:12px;font-weight:600;color:${kleur};flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${naam}</span>
+          <input type="text" placeholder="Hernoem naar..." 
+            style="background:var(--navy-light);border:1px solid var(--border);color:var(--white);padding:3px 7px;border-radius:4px;font-family:'Inter',sans-serif;font-size:11px;width:130px;outline:none;"
+            id="hernaam-${naam.replace(/[^a-zA-Z0-9]/g,'_')}">
+          <button onclick="hernoemInBoekingen('${naam.replace(/'/g,"\\'")}', document.getElementById('hernaam-${naam.replace(/[^a-zA-Z0-9]/g,'_')}').value)"
+            style="background:var(--navy-light);border:1px solid var(--border);color:var(--gold);padding:3px 8px;border-radius:4px;font-family:'Inter',sans-serif;font-size:11px;cursor:pointer;white-space:nowrap;">
+            ✓ OK
+          </button>
+          <button onclick="verwijderUitBoekingen('${naam.replace(/'/g,"\\'")}', this)"
+            style="background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;padding:0 2px;">✕</button>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn-secondary" onclick="voegNaamToeAanBoekingen()" style="font-size:12px;">+ Naam toevoegen</button>
+    </div>`;
+}
+
+function hernoemInBoekingen(oudNaam, nieuwNaam){
+  nieuwNaam = nieuwNaam.trim();
+  if(!nieuwNaam || nieuwNaam === oudNaam){ alert('Vul een nieuwe naam in.'); return; }
+  if(!confirm(`"${oudNaam}" hernoemen naar "${nieuwNaam}"?\n\nAls "${nieuwNaam}" al bestaat worden de waarden samengevoegd.`)) return;
+
+  Object.keys(boekingen).forEach(key=>{
+    if(boekingen[key][oudNaam] !== undefined){
+      const val = boekingen[key][oudNaam];
+      delete boekingen[key][oudNaam];
+      boekingen[key][nieuwNaam] = (boekingen[key][nieuwNaam]||0) + val;
+    }
+  });
+
+  localStorage.setItem('bb_boekingen', JSON.stringify(boekingen));
+  slaBoekingOpInSheets();
+  renderNamenBeheer();
+  renderBoekingen();
+}
+
+function verwijderUitBoekingen(naam, btn){
+  if(!confirm(`"${naam}" verwijderen uit alle boekingen?\n\nDit verwijdert alle historische cijfers van deze naam.`)) return;
+  Object.keys(boekingen).forEach(key=>{ delete boekingen[key][naam]; });
+  localStorage.setItem('bb_boekingen', JSON.stringify(boekingen));
+  slaBoekingOpInSheets();
+  renderNamenBeheer();
+  renderBoekingen();
+}
+
+function voegNaamToeAanBoekingen(){
+  const naam = prompt('Naam toevoegen aan boekingen:');
+  if(!naam || !naam.trim()) return;
+  // Voeg toe met 0 in huidige maand zodat hij zichtbaar wordt
+  const now = new Date();
+  const key = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  if(!boekingen[key]) boekingen[key] = {};
+  if(boekingen[key][naam.trim()] === undefined) boekingen[key][naam.trim()] = 0;
+  localStorage.setItem('bb_boekingen', JSON.stringify(boekingen));
+  renderNamenBeheer();
+  renderBoekingen();
+}
+
+// ===== EXCEL IMPORT =====
+async function importeerExcel(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  event.target.value = '';
+
+  // SheetJS laden via CDN
+  if(!window.XLSX){
+    await new Promise((resolve, reject)=>{
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      let totaalToegevoegd = 0;
+      const gevondenNamen = new Set();
+
+      wb.SheetNames.forEach(sheetName => {
+        const ws = wb.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+
+        // Zoek header-rijen met 'Naam' in kolom A
+        const headerIndices = rows.reduce((acc, row, i) => {
+          if(row[0] === 'Naam') acc.push(i);
+          return acc;
+        }, []);
+
+        // Probeer jaar uit sheetnaam te halen
+        const jaarMatch = sheetName.match(/20\d\d/);
+        if(!jaarMatch) return;
+        const sheetJaar = parseInt(jaarMatch[0]);
+
+        // Verwerk elk data-blok
+        headerIndices.forEach((hIdx, blockNr) => {
+          const jaar = sheetJaar - (headerIndices.length - 1 - blockNr);
+          const eindIdx = headerIndices[blockNr+1] || rows.length;
+          const dataRows = rows.slice(hIdx+1, eindIdx);
+
+          dataRows.forEach(row => {
+            const naam = row[0];
+            if(!naam || typeof naam !== 'string') return;
+            const naamTrimmed = naam.trim();
+            if(!naamTrimmed || naamTrimmed === 'Naam') return;
+            // Sla totaalrijen over
+            if(['Totaal','totaal','Verschillen per persoon','Percentage','Automatisering','Gemiddeld','Cumulatief','Niemand','Overig','Overige medewerkers','Yuki'].some(s=>naamTrimmed.startsWith(s))) return;
+
+            gevondenNamen.add(naamTrimmed);
+            for(let m=0; m<12; m++){
+              const val = row[m+1];
+              if(val === null || val === undefined || val === 0) continue;
+              const numVal = parseInt(val);
+              if(isNaN(numVal) || numVal === 0) continue;
+              const key = `${jaar}-${String(m+1).padStart(2,'0')}`;
+              if(!boekingen[key]) boekingen[key] = {};
+              boekingen[key][naamTrimmed] = (boekingen[key][naamTrimmed]||0) + numVal;
+              totaalToegevoegd++;
+            }
+          });
+        });
+      });
+
+      localStorage.setItem('bb_boekingen', JSON.stringify(boekingen));
+      slaBoekingOpInSheets();
+      renderNamenBeheer();
+      renderBoekingen();
+
+      alert(`✓ Import geslaagd!\n\n${totaalToegevoegd} waarden ingeladen\n${gevondenNamen.size} namen gevonden\n\nPas namen aan via het namenlijst hierboven als er dubbelen of varianten zijn.`);
+    } catch(err){
+      alert('Fout bij importeren: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
 // ===== BOEKINGEN =====
 // boekingen = { "2024-01": { "Cennet": 150, "Dennis": 200, ... }, ... }
 
 // ===== HISTORISCHE BOEKINGEN (geïmporteerd uit Excel) =====
-const HISTORISCHE_BOEKINGEN = {"2021-01":{"Yuki":802,"Yvonne Paanakker":68,"Kees Burmanje":109,"Overig":2,"Natascha Mommersteeg":50,"Mike":1723,"René":30,"Natasja":79},"2021-02":{"Yuki":3890,"Kees Burmanje":293,"Overig":11,"Natascha Mommersteeg":459,"Mike":4596,"René":130,"Natasja":1693},"2021-03":{"Yuki":7905,"Yvonne Paanakker":87,"Kees Burmanje":162,"Overig":10,"Natascha Mommersteeg":451,"Mike":5894,"René":381,"Natasja":3154},"2021-04":{"Yuki":12874,"Kees Burmanje":142,"Overig":164,"Natascha Mommersteeg":1006,"Mike":5416,"René":228,"Natasja":3647},"2021-05":{"Yuki":7982,"Kees Burmanje":77,"Overig":1,"Natascha Mommersteeg":1414,"Mike":2568,"René":244,"Natasja":2407},"2021-06":{"Yuki":9165,"Kees Burmanje":96,"Overig":3,"Natascha Mommersteeg":881,"Mike":2869,"René":128,"Natasja":3290},"2021-07":{"Yuki":12189,"Kees Burmanje":109,"Overig":2,"Natascha Mommersteeg":1258,"Mike":6272,"René":300,"Natasja":2597},"2021-08":{"Yuki":7093,"Kees Burmanje":151,"Natascha Mommersteeg":673,"Mike":882,"René":413,"Natasja":1016},"2021-09":{"Yuki":9537,"Yvonne Paanakker":445,"Kees Burmanje":62,"Overig":2,"Natascha Mommersteeg":1281,"Mike":3005,"René":265,"Natasja":3230},"2021-10":{"Yuki":14801,"Kees Burmanje":96,"Overig":4,"Natascha Mommersteeg":949,"Mike":6779,"René":403,"Natasja":3108},"2021-11":{"Yuki":10408,"Yvonne Paanakker":215,"Kees Burmanje":98,"Overig":5,"Natascha Mommersteeg":149,"Mike":3776,"René":3158,"Natasja":2692},"2021-12":{"Yuki":12695,"Kees Burmanje":131,"Overig":4,"Natascha Mommersteeg":19,"Mike":1777,"René":2533,"Natasja":1634},"2022-01":{"Yuki":37337,"Kees Burmanje":98,"Overig":1,"Natascha Mommersteeg":205,"Yvonne Paanakker":-68,"Mike":5729,"René":16041,"Natasja":4613},"2022-02":{"Yuki":25732,"Kees Burmanje":118,"Overig":-2,"Natascha Mommersteeg":-24,"Mike":-624,"René":9461,"Natasja":2399},"2022-03":{"Yuki":27354,"Kees Burmanje":132,"Natascha Mommersteeg":2594,"Yvonne Paanakker":-87,"Overig":-10,"Mike":-2573,"René":11121,"Natasja":3482},"2022-04":{"Yuki":26003,"Yvonne Paanakker":564,"Kees Burmanje":446,"Natascha Mommersteeg":-259,"Overig":-164,"Mike":3962,"René":9558,"Natasja":5077},"2022-05":{"Yuki":28819,"Yvonne Paanakker":501,"Kees Burmanje":316,"Natascha Mommersteeg":-223,"Overig":-1,"Mike":6579,"René":5990,"Natasja":6323},"2022-06":{"Yuki":28908,"Kees Burmanje":225,"Overig":0,"Natascha Mommersteeg":-881,"Mike":3620,"René":9493,"Natasja":1387},"2022-07":{"Yuki":28851,"Yvonne Paanakker":72,"Kees Burmanje":401,"Overig":7,"Natascha Mommersteeg":-1258,"Mike":2368,"René":11907,"Natasja":4003},"2022-08":{"Yuki":23450,"Kees Burmanje":203,"Natascha Mommersteeg":-673,"Mike":414,"René":11923,"Natasja":2410},"2022-09":{"Yuki":40611,"Kees Burmanje":244,"Natascha Mommersteeg":-1278,"Yvonne Paanakker":-445,"Overig":-2,"Mike":3532,"René":11105,"Natasja":4870},"2022-10":{"Yuki":33730,"Yvonne Paanakker":1533,"Kees Burmanje":414,"Overig":20,"Natascha Mommersteeg":-949,"Mike":3475,"René":12014,"Natasja":4863,"Mirjan":198},"2022-11":{"Yuki":47030,"Yvonne Paanakker":-212,"Kees Burmanje":259,"Natascha Mommersteeg":-146,"Overig":-5,"Mike":6949,"René":11647,"Natasja":4817,"Mirjan":4686},"2022-12":{"Yuki":34144,"Kees Burmanje":382,"Overig":-4,"Natascha Mommersteeg":-19,"Ferry van Rooij":1,"Mike":4262,"René":7457,"Natasja":7585,"Thom":1,"Mirjan":813,"Janneke":1},"2023-01":{"Yuki":42910,"Kees Burmanje":450,"Overig":-1,"Natascha Mommersteeg":-85,"Mike":13726,"René":9301,"Natasja":6701,"Rene Burmanje":61,"Thom":59,"Mirjan":1419},"2023-02":{"Yuki":40468,"Kees Burmanje":301,"Overig":0,"Natascha Mommersteeg":-145,"Mike":9054,"René":9231,"Natasja":9340,"Rene Burmanje":58,"Thom":57,"Mirjan":48},"2023-03":{"Yuki":80971,"Kees Burmanje":16,"Overig":9,"Natascha Mommersteeg":-1015,"Mike":21282,"René":15543,"Natasja":12512,"Thom":3434,"Rene Burmanje":77,"Mirjan":45},"2023-04":{"Yuki":64101,"Kees Burmanje":-73,"Overig":3,"Yvonne Paanakker":-188,"Natascha Mommersteeg":-249,"Mike":5627,"René":11768,"Natasja":7601,"Thom":5648,"Rene Burmanje":74,"Mirjan":726},"2023-05":{"Yuki":47781,"Kees Burmanje":-80,"Overig":9,"Yvonne Paanakker":-167,"Natascha Mommersteeg":-397,"Mike":8602,"René":7131,"Natasja":3781,"Thom":17560,"Rene Burmanje":59,"Mirjan":9},"2023-06":{"Yuki":56755,"Kees Burmanje":-80,"Overig":5,"Mike":6702,"René":5693,"Natasja":6796,"Thom":14464,"Rene Burmanje":67,"Iris":127,"Mirjan":6,"Janneke":254},"2023-07":{"Yuki":59237,"Kees Burmanje":-140,"Overig":30,"Yvonne Paanakker":-24,"Mike":9959,"René":12084,"Natasja":4739,"Thom":14636,"Rene Burmanje":60},"2023-08":{"Yuki":49102,"Kees Burmanje":-55,"Overig":27,"Mike":1300,"René":12153,"Natasja":2719,"Thom":11716,"Rene Burmanje":61,"Iris":1,"Mirjan":3,"Janneke":2},"2023-09":{"Yuki":50929,"Kees Burmanje":-96,"Overig":36,"Natascha Mommersteeg":-1,"Mike":4972,"René":705,"Natasja":5248,"Thom":13109,"Rene Burmanje":70,"Mirjan":12},"2023-10":{"Yuki":68751,"Kees Burmanje":-116,"Overig":19,"Yvonne Paanakker":-511,"Mike":9320,"René":10016,"Natasja":6046,"Thom":11992,"Rene Burmanje":63,"Mirjan":-66},"2023-11":{"Yuki":49840,"Kees Burmanje":13,"Overig":21,"Ferry van Rooij":1422,"Yvonne Paanakker":-1,"Natascha Mommersteeg":-1,"Mike":3692,"René":-930,"Natasja":6266,"Thom":17009,"Ferry":1,"Rene Burmanje":66,"Mirjan":-1562},"2023-12":{"Yuki":55072,"Kees Burmanje":-159,"Overig":12,"Ferry van Rooij":8372,"Mike":1562,"René":477,"Natasja":3956,"Thom":15043,"Ferry":7,"Rene Burmanje":71,"Evelyn Lammers":1,"Kelly de Groen":1,"Iris":1,"Mirjan":-271,"Janneke":1},"2024-01":{"Yuki":63958,"Kees Burmanje":-146,"Overig":159,"Ferry van Rooij":11637,"Mike":3668,"René":5515,"Natasja":3944,"Thom":21175,"Ferry":135,"Rene Burmanje":64,"Iris rundberg":55,"Rene":11,"Iris":76,"Niemand":3,"Mirjan":-473},"2024-02":{"Yuki":49428,"Kees Burmanje":370,"Overig":29,"Ferry van Rooij":16305,"Mike":-1135,"René":-190,"Natasja":2697,"Thom":14835,"Ferry":129,"Rene Burmanje":57,"Iris rundberg":53,"Rene":10,"Iris":53,"Niemand":3,"Mirjan":-16},"2024-03":{"Yuki":53516,"Kees Burmanje":1102,"Overig":99,"Ferry van Rooij":18711,"Mike":-4905,"René":2347,"Natasja":4512,"Thom":15492,"Ferry":124,"Rene Burmanje":64,"Iris rundberg":54,"Rene":10,"Iris":52,"Niemand":2,"Mirjan":-15},"2024-04":{"Yuki":51992,"Kees Burmanje":2101,"Overig":80,"Ferry van Rooij":12393,"Mike":3669,"René":394,"Natasja":5712,"Thom":22303,"Ferry":110,"Rene Burmanje":61,"Iris rundberg":52,"Rene":9,"Iris":34,"Mirjan":-242},"2024-05":{"Yuki":58089,"Kees Burmanje":733,"Overig":162,"Ferry van Rooij":16491,"Mike":767,"René":-314,"Natasja":6851,"Thom":12915,"Ferry":75,"Rene Burmanje":54,"Iris rundberg":54,"Rene":7,"Iris":74,"Niemand":1,"Mirjan":-3},"2024-06":{"Yuki":52745,"Kees Burmanje":510,"Overig":112,"Ferry van Rooij":7470,"Mike":2390,"René":6019,"Natasja":6742,"Thom":13827,"Ferry":38,"Rene Burmanje":57,"Iris rundberg":56,"Rene":6,"Iris":17,"Niemand":1,"Mirjan":-2},"2024-07":{"Yuki":62985,"Kees Burmanje":4637,"Overig":220,"Ferry van Rooij":13335,"Mike":1794,"René":2355,"Natasja":7468,"Iris":12544,"Thom":11932,"Ferry":8,"Rene Burmanje":65,"Iris rundberg":49},"2024-08":{"Yuki":55180,"Kees Burmanje":1017,"Overig":21,"Ferry van Rooij":13011,"Mike":726,"René":-2819,"Natasja":3744,"Iris":12393,"Thom":2586,"Ferry":11,"Rene Burmanje":70,"Iris rundberg":57,"Mirjan":-1},"2024-09":{"Yuki":52394,"Kees Burmanje":190,"Overig":66,"Ferry van Rooij":11184,"Mike":-883,"René":670,"Natasja":4295,"Iris":10703,"Thom":9865,"Ferry":9,"Rene Burmanje":66,"Iris rundberg":59,"Mirjan":-4},"2024-10":{"Yuki":72065,"Kees Burmanje":3192,"Overig":102,"Evelyn Lammers":324,"Kelly de Groen":524,"Ferry van Rooij":18072,"Mike":-1316,"René":3236,"Natasja":6024,"Iris":12337,"Thom":14700,"Ferry":10,"Rene Burmanje":72,"Iris rundberg":57,"Kelly de Groen/Yvonne van h.":262},"2024-11":{"Yuki":61963,"Kees Burmanje":439,"Overig":152,"Evelyn Lammers":1731,"Kelly de Groen":54,"Ferry van Rooij":97,"Mike":2745,"René":1938,"Natasja":4297,"Iris":12828,"Thom":10350,"Rene Burmanje":53,"Iris rundberg":60,"Kelly de Groen/Yvonne van h.":27},"2024-12":{"Yuki":75999,"Kees Burmanje":611,"Overig":125,"Evelyn Lammers":2537,"Kelly de Groen":-1,"Ferry van Rooij":-2791,"Mike":6963,"René":4126,"Natasja":6183,"Iris":10316,"Thom":11289,"Rene Burmanje":81,"Iris rundberg":59},"2025-01":{"Yuki":85410,"Kees Burmanje":2029,"Overig":577,"Evelyn Lammers":2120,"Kelly de Groen/Yvonne van h.":228,"Ferry van Rooij":-3879,"Mike":12542,"René":10302,"Natasja":9028,"Iris":12675,"Thom":5072,"Rene Burmanje":85,"Iris rundberg":58,"Yvonne van Hemert":55,"Yvonne de Mulder":114,"Overige medewerkers":2079},"2025-02":{"Yuki":72541,"Kees Burmanje":4,"Overig":302,"Evelyn Lammers":386,"Kelly de Groen/Yvonne van h.":314,"Ferry van Rooij":-5435,"Mike":5615,"René":2479,"Natasja":4383,"Iris":14764,"Thom":10222,"Rene Burmanje":86,"Iris rundberg":61,"Yvonne van Hemert":49,"Yvonne de Mulder":157,"Overige medewerkers":281},"2025-03":{"Yuki":83345,"Kees Burmanje":40,"Overig":206,"Kelly de Groen/Yvonne van h.":1828,"Ferry van Rooij/Moes/dennis":12,"Ferry van Rooij":-6225,"Mike":6522,"René":1441,"Natasja":4996,"Iris":14726,"Thom":11200,"Rene Burmanje":85,"Iris rundberg":56,"Yvonne van Hemert":43,"Yvonne de Mulder":914,"Dennis Aalbers":12,"Overige medewerkers":210},"2025-04":{"Yuki":120838,"Kees Burmanje":2244,"Overig":285,"Kelly de Groen/Yvonne van h.":946,"Ferry van Rooij/Moes/dennis":275,"Ferry van Rooij":-3856,"Mike":8292,"René":7610,"Natasja":5410,"Iris":15127,"Thom":10585,"Rene Burmanje":93,"Iris rundberg":61,"Yvonne van Hemert":57,"Yvonne de Mulder":473,"Dennis Aalbers":275,"Overige medewerkers":1479},"2025-05":{"Yuki":93032,"Kees Burmanje":432,"Overig":212,"Kelly de Groen/Yvonne van h.":1184,"Ferry van Rooij/Moes/dennis":1775,"Ferry van Rooij":-3722,"Mike":3867,"René":2483,"Natasja":4870,"Iris":10001,"Thom":11507,"Ferry":3,"Rene Burmanje":87,"Iris rundberg":62,"Yvonne van Hemert":64,"Yvonne de Mulder":592,"Dennis Aalbers":1775,"Overige medewerkers":341,"Gerjan":63},"2025-06":{"Yuki":61635,"Kees Burmanje":215,"Overig":100,"Kelly de Groen/Yvonne van h.":1322,"Ferry van Rooij/Moes/dennis":1142,"Ferry van Rooij":-1348,"Mike":2649,"René":-222,"Natasja":5345,"Iris":12203,"Thom":11767,"Ferry":2,"Rene Burmanje":88,"Iris rundberg":61,"Yvonne van Hemert":67,"Yvonne de Mulder":661,"Dennis Aalbers":1142,"Overige medewerkers":194,"Gerjan":351},"2025-07":{"Yuki":153279,"Kees Burmanje":-67,"Overig":292,"Kelly de Groen/Yvonne van h.":1062,"Ferry van Rooij/Moes/dennis":750,"Ferry van Rooij":-3695,"Mike":5185,"René":4667,"Natasja":6128,"Iris":9719,"Thom":12214,"Rene Burmanje":93,"Iris rundberg":65,"Yvonne van Hemert":74,"Yvonne de Mulder":531,"Dennis Aalbers":750,"Overige medewerkers":741,"Gerjan":585},"2025-08":{"Yuki":57736,"Kees Burmanje":-6,"Overig":419,"Kelly de Groen/Yvonne van h.":802,"Ferry van Rooij":-4337,"Mike":3401,"René":1299,"Natasja":3427,"Iris":7037,"Thom":16053,"Rene Burmanje":89,"Iris rundberg":65,"Yvonne van Hemert":73,"Yvonne de Mulder":401,"Overige medewerkers":170,"Gerjan":531},"2025-09":{"Yuki":79799,"Overig":409,"Kelly de Groen/Yvonne van h.":1874,"Kees Burmanje":-64,"Ferry van Rooij":-3728,"Mike":4375,"René":1826,"Natasja":4491,"Iris":10745,"Thom":13018,"Rene Burmanje":90,"Iris rundberg":65,"Yvonne van Hemert":65,"Yvonne de Mulder":937,"Gerjan":942},"2025-10":{"Yuki":185950,"Overig":128,"Kelly de Groen/Yvonne van h.":2404,"Kees Burmanje":-1070,"Evelyn Lammers":-108,"Ferry van Rooij":-6024,"Mike":9025,"René":7599,"Natasja":5023,"Iris":7939,"Thom":15113,"Rene Burmanje":94,"Iris rundberg":68,"Yvonne van Hemert":71,"Yvonne de Mulder":1333,"Gerjan":1086},"2025-11":{"Yuki":75214,"Overig":97,"Kelly de Groen/Yvonne van h.":1261,"Ferry van Rooij/Moes/dennis":859,"Kees Burmanje":-161,"Evelyn Lammers":-577,"Ferry van Rooij":667,"Mike":1695,"Natasja":4422,"Iris":5804,"Thom":9722,"Ferry":1,"Rene Burmanje":72,"Iris rundberg":72,"Yvonne van Hemert":70,"Yvonne de Mulder":644,"Dennis Aalbers":859,"René":-133,"Gerjan":900},"2025-12":{"Yuki":154992,"Overig":125,"Kelly de Groen/Yvonne van h.":998,"Ferry van Rooij/Moes/dennis":1322,"Kees Burmanje":-205,"Evelyn Lammers":-846,"Ferry van Rooij":1322,"Mike":1894,"Natasja":6006,"Iris":5452,"Thom":9543,"Ferry":1,"Rene Burmanje":94,"Iris rundberg":78,"Yvonne van Hemert":64,"Yvonne de Mulder":499,"Dennis Aalbers":1322,"René":-453,"Gerjan":825},"2026-01":{"Yuki":51581,"Yvonne de Mulder":1618,"Dennis Aalbers":3158,"Overig":-46,"Mike":371,"René":1552,"Natasja":2047,"Thom":5596,"Iris":4945,"Gerjan":1302},"2026-02":{"Yuki":36612,"Yvonne de Mulder":2463,"Dennis Aalbers":1885,"Overig":556,"Mike":212,"René":660,"Natasja":1188,"Thom":5095,"Iris":3330,"Gerjan":1130},"2026-03":{"Yuki":140504,"Yvonne de Mulder":-558,"Dennis Aalbers":6018,"Overig":218,"Mike":2003,"René":6582,"Natasja":2903,"Thom":8299,"Iris":3046,"Gerjan":1170},"2026-04":{"Yuki":41950,"Dennis Aalbers":6241,"Overig":258,"Yvonne de Mulder":-473,"Mike":85,"René":3651,"Natasja":3061,"Thom":1823,"Iris":3556,"Gerjan":1139},"2026-05":{"Yuki":36321,"Dennis Aalbers":4913,"Overig":315,"Cennet":4538,"Yvonne de Mulder":-533,"Cennet Kul":64,"Mike":450,"René":-279,"Natasja":1244,"Thom":5325,"Iris":2515,"Gerjan":313},"2026-06":{"Yuki":100531,"Yvonne de Mulder":-580,"Dennis Aalbers":2208,"Overig":260,"Cennet":8671,"Melvin":2367,"Cennet Kul":65,"Melvin Brekelmans":63,"Mike":648,"René":558,"Natasja":2109,"Thom":4507,"Iris":5593,"Gerjan":167},"2026-07":{"Yuki":38634,"Dennis Aalbers":4830,"Overig":37,"Cennet":8097,"Melvin":2785,"Yvonne de Mulder":-531,"Cennet Kul":66,"Melvin Brekelmans":28,"Mike":2626,"René":-23,"Natasja":1420,"Thom":3636,"Iris":4075,"Gerjan":533},"2026-08":{"Yuki":-27541,"Yvonne de Mulder":-401,"Overig":-143,"Mike":-1250,"René":-721,"Natasja":-1666,"Thom":-6040,"Iris":-3719,"Gerjan":-177},"2026-09":{"Yuki":-34895,"Yvonne de Mulder":-937,"Overig":-145,"Mike":-1594,"René":-849,"Natasja":-2235,"Thom":-5888,"Iris":-4767,"Gerjan":-314},"2026-10":{"Yuki":-73102,"Yvonne de Mulder":-1333,"Overig":-55,"Mike":-3306,"René":-3415,"Natasja":-2630,"Thom":-7085,"Iris":-4015,"Gerjan":-362},"2026-11":{"Yuki":-34478,"Yvonne de Mulder":-644,"Dennis Aalbers":-859,"Overig":-50,"Mike":-1108,"René":-319,"Natasja":-2239,"Thom":-4987,"Iris":-3357,"Gerjan":-300},"2026-12":{"Yuki":-62690,"Yvonne de Mulder":-499,"Dennis Aalbers":-1322,"Overig":-56,"Mike":-1506,"René":-448,"Natasja":-2913,"Thom":-4960,"Iris":-2962,"Gerjan":-275}};
+const HISTORISCHE_BOEKINGEN = {"2021-01":{"Mike":1723,"René":30,"Natasja":79,"Yvonne":68,"Natascha":50},"2021-02":{"Mike":4596,"René":130,"Natasja":1693,"Natascha":459},"2021-03":{"Mike":5894,"René":381,"Natasja":3154,"Yvonne":87,"Natascha":451},"2021-04":{"Mike":5416,"René":228,"Natasja":3647,"Natascha":1006},"2021-05":{"Mike":2568,"René":244,"Natasja":2407,"Natascha":1414},"2021-06":{"Mike":2869,"René":128,"Natasja":3290,"Natascha":881},"2021-07":{"Mike":6272,"René":300,"Natasja":2597,"Natascha":1258},"2021-08":{"Mike":882,"René":413,"Natasja":1016,"Natascha":673},"2021-09":{"Mike":3005,"René":265,"Natasja":3230,"Yvonne":445,"Natascha":1281},"2021-10":{"Mike":6779,"René":403,"Natasja":3108,"Natascha":949},"2021-11":{"Mike":3776,"René":3158,"Natasja":2692,"Yvonne":215,"Natascha":149},"2021-12":{"Mike":1777,"René":2533,"Natasja":1634,"Natascha":19},"2022-01":{"Mike":5729,"René":16041,"Natasja":4613,"Yvonne":-68,"Natascha":205},"2022-02":{"Mike":-624,"René":9461,"Natasja":2399,"Natascha":-24},"2022-03":{"Mike":-2573,"René":11121,"Natasja":3482,"Yvonne":-87,"Natascha":2594},"2022-04":{"Mike":3962,"René":9558,"Natasja":5077,"Yvonne":564,"Natascha":-259},"2022-05":{"Mike":6579,"René":5990,"Natasja":6323,"Yvonne":501,"Natascha":-223},"2022-06":{"Mike":3620,"René":9493,"Natasja":1387,"Natascha":-881},"2022-07":{"Mike":2368,"René":11907,"Natasja":4003,"Yvonne":72,"Natascha":-1258},"2022-08":{"Mike":414,"René":11923,"Natasja":2410,"Natascha":-673},"2022-09":{"Mike":3532,"René":11105,"Natasja":4870,"Yvonne":-445,"Natascha":-1278},"2022-10":{"Mike":3475,"René":12014,"Natasja":4863,"Mirjan":198,"Yvonne":1533,"Natascha":-949},"2022-11":{"Mike":6949,"René":11647,"Natasja":4817,"Mirjan":4686,"Yvonne":-212,"Natascha":-146},"2022-12":{"Mike":4262,"René":7457,"Natasja":7585,"Thom":1,"Mirjan":813,"Janneke":1,"Ferry":1,"Natascha":-19},"2023-01":{"Mike":13726,"René":9362,"Natasja":6701,"Thom":59,"Mirjan":1419,"Natascha":-85},"2023-02":{"Mike":9054,"René":9289,"Natasja":9340,"Thom":57,"Mirjan":48,"Natascha":-145},"2023-03":{"Mike":21282,"René":15620,"Natasja":12512,"Thom":3434,"Mirjan":45,"Natascha":-1015},"2023-04":{"Mike":5627,"René":11842,"Natasja":7601,"Thom":5648,"Mirjan":726,"Yvonne":-188,"Natascha":-249},"2023-05":{"Mike":8602,"René":7190,"Natasja":3781,"Thom":17560,"Mirjan":9,"Yvonne":-167,"Natascha":-397},"2023-06":{"Mike":6702,"René":5760,"Natasja":6796,"Thom":14464,"Iris":127,"Mirjan":6,"Janneke":254},"2023-07":{"Mike":9959,"René":12144,"Natasja":4739,"Thom":14636,"Yvonne":-24},"2023-08":{"Mike":1300,"René":12214,"Natasja":2719,"Thom":11716,"Iris":1,"Mirjan":3,"Janneke":2},"2023-09":{"Mike":4972,"René":775,"Natasja":5248,"Thom":13109,"Mirjan":12,"Natascha":-1},"2023-10":{"Mike":9320,"René":10079,"Natasja":6046,"Thom":11992,"Mirjan":-66,"Yvonne":-511},"2023-11":{"Mike":3692,"René":-864,"Natasja":6266,"Thom":17009,"Ferry":1423,"Mirjan":-1562,"Yvonne":-1,"Natascha":-1},"2023-12":{"Mike":1562,"René":548,"Natasja":3956,"Thom":15043,"Ferry":8379,"Evelyn Lammers":1,"Iris":1,"Mirjan":-271,"Janneke":1,"Yvonne":1},"2024-01":{"Mike":3668,"René":5590,"Natasja":3944,"Thom":21175,"Ferry":11772,"Iris":131,"Mirjan":-473},"2024-02":{"Mike":-1135,"René":-123,"Natasja":2697,"Thom":14835,"Ferry":16434,"Iris":106,"Mirjan":-16},"2024-03":{"Mike":-4905,"René":2421,"Natasja":4512,"Thom":15492,"Ferry":18835,"Iris":106,"Mirjan":-15},"2024-04":{"Mike":3669,"René":464,"Natasja":5712,"Thom":22303,"Ferry":12503,"Iris":86,"Mirjan":-242},"2024-05":{"Mike":767,"René":-253,"Natasja":6851,"Thom":12915,"Ferry":16566,"Iris":128,"Mirjan":-3},"2024-06":{"Mike":2390,"René":6082,"Natasja":6742,"Thom":13827,"Ferry":7508,"Iris":73,"Mirjan":-2},"2024-07":{"Mike":1794,"René":2420,"Natasja":7468,"Iris":12593,"Thom":11932,"Ferry":13343},"2024-08":{"Mike":726,"René":-2749,"Natasja":3744,"Iris":12450,"Thom":2586,"Ferry":13022,"Mirjan":-1},"2024-09":{"Mike":-883,"René":736,"Natasja":4295,"Iris":10762,"Thom":9865,"Ferry":11193,"Mirjan":-4},"2024-10":{"Evelyn Lammers":324,"Mike":-1316,"René":3308,"Natasja":6024,"Iris":12394,"Thom":14700,"Ferry":18082,"Yvonne":786},"2024-11":{"Evelyn Lammers":1731,"Mike":2745,"René":1991,"Natasja":4297,"Iris":12888,"Thom":10350,"Yvonne":81,"Ferry":97},"2024-12":{"Evelyn Lammers":2537,"Mike":6963,"René":4207,"Natasja":6183,"Iris":10375,"Thom":11289,"Yvonne":-1,"Ferry":-2791},"2025-01":{"Evelyn Lammers":2120,"Mike":12542,"René":10387,"Natasja":9028,"Iris":12733,"Thom":5072,"Yvonne":397,"Ferry":-3879},"2025-02":{"Evelyn Lammers":386,"Mike":5615,"René":2565,"Natasja":4383,"Iris":14825,"Thom":10222,"Yvonne":520,"Ferry":-5435},"2025-03":{"Mike":6522,"René":1526,"Natasja":4996,"Iris":14782,"Thom":11200,"Dennis":12,"Yvonne":2785,"Ferry":-6213},"2025-04":{"Mike":8292,"René":7703,"Natasja":5410,"Iris":15188,"Thom":10585,"Dennis":275,"Yvonne":1476,"Ferry":-3581},"2025-05":{"Mike":3867,"René":2570,"Natasja":4870,"Iris":10063,"Thom":11507,"Ferry":-1944,"Gerjan":63,"Dennis":1775,"Yvonne":1840},"2025-06":{"Mike":2649,"René":-134,"Natasja":5345,"Iris":12264,"Thom":11767,"Ferry":-204,"Gerjan":351,"Dennis":1142,"Yvonne":2050},"2025-07":{"Mike":5185,"René":4760,"Natasja":6128,"Iris":9784,"Thom":12214,"Gerjan":585,"Dennis":750,"Yvonne":1667,"Ferry":-2945},"2025-08":{"Mike":3401,"René":1388,"Natasja":3427,"Iris":7102,"Thom":16053,"Gerjan":531,"Yvonne":1276,"Ferry":-4337},"2025-09":{"Mike":4375,"René":1916,"Natasja":4491,"Iris":10810,"Thom":13018,"Gerjan":942,"Yvonne":2876,"Ferry":-3728},"2025-10":{"Evelyn Lammers":-108,"Mike":9025,"René":7693,"Natasja":5023,"Iris":8007,"Thom":15113,"Gerjan":1086,"Yvonne":3808,"Ferry":-6024},"2025-11":{"Evelyn Lammers":-577,"Mike":1695,"Natasja":4422,"Iris":5876,"Thom":9722,"Ferry":1527,"René":-61,"Gerjan":900,"Dennis":859,"Yvonne":1975},"2025-12":{"Evelyn Lammers":-846,"Mike":1894,"Natasja":6006,"Iris":5530,"Thom":9543,"Ferry":2645,"René":-359,"Gerjan":825,"Dennis":1322,"Yvonne":1561},"2026-01":{"Mike":371,"René":1552,"Natasja":2047,"Thom":5596,"Iris":4945,"Gerjan":1302,"Dennis":3158,"Yvonne":1618},"2026-02":{"Mike":212,"René":660,"Natasja":1188,"Thom":5095,"Iris":3330,"Gerjan":1130,"Dennis":1885,"Yvonne":2463},"2026-03":{"Mike":2003,"René":6582,"Natasja":2903,"Thom":8299,"Iris":3046,"Gerjan":1170,"Dennis":6018,"Yvonne":-558},"2026-04":{"Mike":85,"René":3651,"Natasja":3061,"Thom":1823,"Iris":3556,"Gerjan":1139,"Dennis":6241,"Yvonne":-473},"2026-05":{"Cennet":4602,"Mike":450,"René":-279,"Natasja":1244,"Thom":5325,"Iris":2515,"Gerjan":313,"Dennis":4913,"Yvonne":-533},"2026-06":{"Cennet":8736,"Melvin":2430,"Mike":648,"René":558,"Natasja":2109,"Thom":4507,"Iris":5593,"Gerjan":167,"Dennis":2208,"Yvonne":-580},"2026-07":{"Cennet":8163,"Melvin":2813,"Mike":2626,"René":-23,"Natasja":1420,"Thom":3636,"Iris":4075,"Gerjan":533,"Dennis":4830,"Yvonne":-531},"2026-08":{"Mike":-1250,"René":-721,"Natasja":-1666,"Thom":-6040,"Iris":-3719,"Gerjan":-177,"Yvonne":-401},"2026-09":{"Mike":-1594,"René":-849,"Natasja":-2235,"Thom":-5888,"Iris":-4767,"Gerjan":-314,"Yvonne":-937},"2026-10":{"Mike":-3306,"René":-3415,"Natasja":-2630,"Thom":-7085,"Iris":-4015,"Gerjan":-362,"Yvonne":-1333},"2026-11":{"Mike":-1108,"René":-319,"Natasja":-2239,"Thom":-4987,"Iris":-3357,"Gerjan":-300,"Dennis":-859,"Yvonne":-644},"2026-12":{"Mike":-1506,"René":-448,"Natasja":-2913,"Thom":-4960,"Iris":-2962,"Gerjan":-275,"Dennis":-1322,"Yvonne":-499}};
 let boekingen = {};
 let boekJaarFilter = new Date().getFullYear();
 let boekMedFilter = null; // null = iedereen
@@ -1672,6 +1851,7 @@ function renderBoekingen(){
   renderBoekMedFilter();
   renderBoekGrafiek();
   renderBoekVergelijk();
+  renderNamenBeheer();
 }
 
 function renderBoekJaarPills(){
@@ -1705,43 +1885,63 @@ function getAlleNamenInJaar(jaar){
 function renderBoekTabel(){
   const el = document.getElementById('boek-tabel-content');
   const jaar = boekJaarFilter;
-  const namen = getAlleNamenInJaar(jaar);
-  if(namen.length===0){ el.innerHTML='<div class="empty-state"><div class="icon">📅</div>Nog geen boekingen voor '+jaar+'.</div>'; return; }
+  const alleNamen = getAlleNamenInJaar(jaar);
+  if(alleNamen.length===0){ el.innerHTML='<div class="empty-state"><div class="icon">📅</div>Nog geen boekingen voor '+jaar+'.</div>'; return; }
 
-  const headers = MAANDEN.map((m,i)=>`<th style="text-align:center;min-width:50px">${m}</th>`).join('');
+  const huidigNamen = alleNamen.filter(n=>MEDEWERKERS.includes(n));
+  const oudNamen = alleNamen.filter(n=>!MEDEWERKERS.includes(n));
+
   const totaalRij = new Array(12).fill(0);
 
-  const rows = namen.map(naam=>{
+  // Compacte headers: alleen maandafkorting
+  const headers = MAANDEN.map(m=>`<th style="text-align:center;min-width:44px;font-size:11px">${m}</th>`).join('');
+
+  const maakRij = (naam, isOud) => {
     const cellen = MAANDEN.map((m,i)=>{
       const key = `${jaar}-${String(i+1).padStart(2,'0')}`;
       const v = boekingen[key]?.[naam];
-      if(v!==undefined) totaalRij[i]+=v;
-      return `<td style="text-align:center;color:${v!==undefined?'var(--white)':'var(--border)'}">${v!==undefined?v:'—'}</td>`;
+      if(v!==undefined && !isOud) totaalRij[i]+=v;
+      const kleur = v===undefined?'var(--border)':'var(--white)';
+      return `<td style="text-align:center;color:${kleur};font-size:13px">${v!==undefined?v.toLocaleString('nl-NL'):'—'}</td>`;
     }).join('');
     const totaal = MAANDEN.reduce((a,m,i)=>{ const k=`${jaar}-${String(i+1).padStart(2,'0')}`; return a+(boekingen[k]?.[naam]||0); },0);
-    const isOud = !MEDEWERKERS.includes(naam);
+    const stijl = isOud ? 'color:var(--text-muted)' : 'font-weight:600';
     return `<tr>
-      <td style="font-weight:600;white-space:nowrap">${naam}${isOud?` <span style="font-size:10px;color:var(--text-muted)">(oud)</span>`:''}</td>
+      <td style="${stijl};white-space:nowrap;font-size:13px">${naam}${isOud?` <span style="font-size:10px;opacity:0.6">(oud)</span>`:''}</td>
       ${cellen}
-      <td style="text-align:center;font-weight:700;color:var(--gold)">${totaal}</td>
+      <td style="text-align:center;font-weight:700;color:${isOud?'var(--text-muted)':'var(--gold)'}">${totaal.toLocaleString('nl-NL')}</td>
     </tr>`;
-  }).join('');
+  };
 
-  const totaalCellen = totaalRij.map(v=>`<td style="text-align:center;font-weight:700;color:var(--gold)">${v||'—'}</td>`).join('');
+  const huidigRows = huidigNamen.map(n=>maakRij(n,false)).join('');
+  const oudRows = oudNamen.map(n=>maakRij(n,true)).join('');
+
+  const totaalCellen = totaalRij.map(v=>`<td style="text-align:center;font-weight:700;color:var(--gold);font-size:13px">${v?v.toLocaleString('nl-NL'):'—'}</td>`).join('');
   const totaalJaar = totaalRij.reduce((a,b)=>a+b,0);
 
-  el.innerHTML = `<table class="dash-table">
+  const oudSectie = oudNamen.length>0 ? `
+    <tr><td colspan="14">
+      <button onclick="this.parentElement.parentElement.querySelectorAll('.oud-rij').forEach(r=>r.style.display=r.style.display==='none'?'':'none');this.textContent=this.textContent.includes('▶')?'▼ Verberg oud-medewerkers (${oudNamen.length})':'▶ Toon oud-medewerkers (${oudNamen.length})';"
+        style="background:none;border:1px solid var(--border);color:var(--text-muted);padding:4px 12px;border-radius:5px;font-family:'Inter',sans-serif;font-size:11px;cursor:pointer;margin:6px 0;">
+        ▶ Toon oud-medewerkers (${oudNamen.length})
+      </button>
+    </td></tr>
+    ${oudRows.replace(/<tr>/g,'<tr class="oud-rij" style="display:none">')}` : '';
+
+  el.innerHTML = `<div style="overflow-x:auto"><table class="dash-table" style="font-size:13px">
     <thead><tr>
-      <th>Medewerker</th>${headers}<th style="text-align:center">Totaal</th>
+      <th style="min-width:100px">Medewerker</th>${headers}<th style="text-align:center;min-width:60px">Totaal</th>
     </tr></thead>
-    <tbody>${rows}
-    <tr style="border-top:2px solid var(--border)">
-      <td style="color:var(--text-muted);font-size:10px;font-weight:600">TOTAAL</td>
-      ${totaalCellen}
-      <td style="text-align:center;font-weight:700;color:var(--gold)">${totaalJaar}</td>
-    </tr>
+    <tbody>
+      ${huidigRows}
+      <tr style="border-top:2px solid var(--border)">
+        <td style="color:var(--text-muted);font-size:10px;font-weight:600">TEAM TOTAAL</td>
+        ${totaalCellen}
+        <td style="text-align:center;font-weight:700;color:var(--gold)">${totaalJaar.toLocaleString('nl-NL')}</td>
+      </tr>
+      ${oudSectie}
     </tbody>
-  </table>`;
+  </table></div>`;
 }
 
 function renderBoekMedFilter(){
