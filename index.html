@@ -1941,16 +1941,18 @@ function renderBoekTabel(){
   const totaalCellen = totaalRij.map(v=>`<td style="text-align:center;font-weight:700;color:var(--gold);font-size:13px">${v?v.toLocaleString('nl-NL'):'—'}</td>`).join('');
   const totaalJaar = totaalRij.reduce((a,b)=>a+b,0);
 
+  const tabelId = `boek-tabel-${jaar}`;
   const oudSectie = oudNamen.length>0 ? `
     <tr><td colspan="14">
-      <button onclick="this.parentElement.parentElement.querySelectorAll('.oud-rij').forEach(r=>r.style.display=r.style.display==='none'?'':'none');this.textContent=this.textContent.includes('▶')?'▼ Verberg oud-medewerkers (${oudNamen.length})':'▶ Toon oud-medewerkers (${oudNamen.length})';"
+      <button onclick="toggleOudRijen('${tabelId}')"
+        id="btn-oud-${tabelId}"
         style="background:none;border:1px solid var(--border);color:var(--text-muted);padding:4px 12px;border-radius:5px;font-family:'Inter',sans-serif;font-size:11px;cursor:pointer;margin:6px 0;">
         ▶ Toon oud-medewerkers (${oudNamen.length})
       </button>
     </td></tr>
-    ${oudRows.replace(/<tr>/g,'<tr class="oud-rij" style="display:none">')}` : '';
+    ${oudRows.replace(/<tr>/g,`<tr class="oud-rij-${tabelId}" style="display:none">`)}` : '';
 
-  el.innerHTML = `<div style="overflow-x:auto"><table class="dash-table" style="font-size:13px">
+  el.innerHTML = `<div style="overflow-x:auto"><table class="dash-table" style="font-size:13px" id="${tabelId}">
     <thead><tr>
       <th style="min-width:100px">Medewerker</th>${headers}<th style="text-align:center;min-width:60px">Totaal</th>
     </tr></thead>
@@ -2036,6 +2038,17 @@ function renderBoekGrafiek(){
     <text x="${PAD.l}" y="14" fill="var(--gold)" font-size="11" font-weight="600" font-family="Inter,sans-serif">Boekingen ${jaar}</text>
   </svg></div>`;
 }
+
+function toggleOudRijen(tabelId){
+  const rijen = document.querySelectorAll(`.oud-rij-${tabelId}`);
+  const btn = document.getElementById(`btn-oud-${tabelId}`);
+  const zichtbaar = rijen.length>0 && rijen[0].style.display !== 'none';
+  rijen.forEach(r=>r.style.display=zichtbaar?'none':'');
+  if(btn) btn.textContent = zichtbaar ? `▶ Toon oud-medewerkers (${rijen.length})` : `▼ Verberg oud-medewerkers (${rijen.length})`;
+}
+
+// ===== MEERJARIGE GRAFIEK =====
+let boekGrafiekJaren = [];
 
 function renderBoekVergelijk(){
   const el = document.getElementById('boek-vergelijk-content');
