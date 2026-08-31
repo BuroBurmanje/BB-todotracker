@@ -469,34 +469,62 @@
     <!-- INVOER sectie -->
     <div style="background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;">
       <div style="font-size:12px;color:var(--gold);font-weight:600;margin-bottom:12px;">Invoer — ook historisch</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
-        <label style="font-size:12px;color:var(--text-muted)">Jaar:</label>
-        <input type="number" id="boek-jaar" min="2015" max="2035" style="background:var(--navy);border:1px solid var(--border);color:var(--white);padding:6px 10px;border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;outline:none;width:90px;">
-        <label style="font-size:12px;color:var(--text-muted)">Maand:</label>
-        <select id="boek-maand" style="background:var(--navy);border:1px solid var(--border);color:var(--white);padding:6px 10px;border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;outline:none;">
-          <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maart</option>
-          <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
-          <option value="7">Juli</option><option value="8">Augustus</option><option value="9">September</option>
-          <option value="10">Oktober</option><option value="11">November</option><option value="12">December</option>
-        </select>
-        <button class="btn-secondary" onclick="laadBoekingMaand()">Laden</button>
+
+      <!-- Modus tabs -->
+      <div style="display:flex;gap:6px;margin-bottom:14px;">
+        <button class="type-btn active-week" id="boek-modus-maand" onclick="setBoekModus('maand')">Per maand</button>
+        <button class="type-btn" id="boek-modus-jaar" onclick="setBoekModus('jaar')">Per jaar (heel jaar in één scherm)</button>
       </div>
 
-      <table class="invoer-table" id="boek-invoer-table">
-        <thead>
-          <tr>
-            <th>Medewerker</th>
-            <th>Boekingen</th>
-            <th>Verschil t.o.v. vorig jaar</th>
-          </tr>
-        </thead>
-        <tbody id="boek-invoer-body"></tbody>
-      </table>
+      <!-- Maand modus -->
+      <div id="boek-invoer-maand-sectie">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+          <label style="font-size:12px;color:var(--text-muted)">Jaar:</label>
+          <input type="number" id="boek-jaar" min="2015" max="2035" style="background:var(--navy);border:1px solid var(--border);color:var(--white);padding:6px 10px;border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;outline:none;width:90px;">
+          <label style="font-size:12px;color:var(--text-muted)">Maand:</label>
+          <select id="boek-maand" style="background:var(--navy);border:1px solid var(--border);color:var(--white);padding:6px 10px;border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;outline:none;">
+            <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maart</option>
+            <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
+            <option value="7">Juli</option><option value="8">Augustus</option><option value="9">September</option>
+            <option value="10">Oktober</option><option value="11">November</option><option value="12">December</option>
+          </select>
+          <button class="btn-secondary" onclick="laadBoekingMaand()">Laden</button>
+        </div>
+        <table class="invoer-table" id="boek-invoer-table">
+          <thead><tr><th>Medewerker</th><th>Boekingen</th><th>Verschil t.o.v. vorig jaar</th></tr></thead>
+          <tbody id="boek-invoer-body"></tbody>
+        </table>
+        <div class="btn-row" style="margin-top:12px;">
+          <button class="btn-primary" onclick="slaBoekingOp()">Opslaan</button>
+          <button class="btn-secondary" onclick="voegOudMedewerkerToe()">+ Naam toevoegen</button>
+          <span class="save-msg" id="boek-save-msg">✓ Opgeslagen</span>
+        </div>
+      </div>
 
-      <div class="btn-row" style="margin-top:12px;">
-        <button class="btn-primary" onclick="slaBoekingOp()">Opslaan</button>
-        <button class="btn-secondary" onclick="voegOudMedewerkerToe()">+ Naam toevoegen</button>
-        <span class="save-msg" id="boek-save-msg">✓ Opgeslagen</span>
+      <!-- Jaar modus -->
+      <div id="boek-invoer-jaar-sectie" style="display:none;">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+          <label style="font-size:12px;color:var(--text-muted)">Jaar:</label>
+          <input type="number" id="boek-jaar-volledig" min="2015" max="2035" style="background:var(--navy);border:1px solid var(--border);color:var(--white);padding:6px 10px;border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;outline:none;width:90px;">
+          <button class="btn-secondary" onclick="laadBoekingJaar()">Laden</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="invoer-table" id="boek-jaar-table">
+            <thead>
+              <tr>
+                <th style="min-width:110px">Medewerker</th>
+                ${['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'].map(m=>`<th style="text-align:center;min-width:58px">${m}</th>`).join('')}
+                <th style="text-align:center">Totaal</th>
+              </tr>
+            </thead>
+            <tbody id="boek-jaar-body"></tbody>
+          </table>
+        </div>
+        <div class="btn-row" style="margin-top:12px;">
+          <button class="btn-primary" onclick="slaBoekingJaarOp()">Jaar opslaan</button>
+          <button class="btn-secondary" onclick="voegJaarNaamToe()">+ Naam toevoegen</button>
+          <span class="save-msg" id="boek-jaar-save-msg">✓ Opgeslagen</span>
+        </div>
       </div>
     </div>
 
@@ -513,6 +541,9 @@
     <div style="font-size:11px;color:var(--gold);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📈 Team totaal per jaar</div>
     <div id="boek-grafiek-jaar-select" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;"></div>
     <div id="boek-grafiek-totaal" style="margin-bottom:24px;"></div>
+
+    <div style="font-size:11px;color:var(--gold);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📊 Cumulatief per jaar — stijgende lijn</div>
+    <div id="boek-grafiek-cumulatief" style="margin-bottom:24px;"></div>
 
     <div style="font-size:11px;color:var(--gold);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">👤 Per medewerker</div>
     <div id="boek-grafiek-content"></div>
@@ -623,10 +654,10 @@ function init(){
   else toonSyncStatus('⚠ Geen Script URL ingesteld in de code','var(--gold)');
 
   laadBoekingen();
-  // Boekingen invoer initialiseren
   const now2 = new Date();
   document.getElementById('boek-jaar').value = now2.getFullYear();
   document.getElementById('boek-maand').value = now2.getMonth()+1;
+  document.getElementById('boek-jaar-volledig').value = now2.getFullYear();
   laadBoekingMaand();
 }
 
@@ -1734,6 +1765,151 @@ async function importeerExcel(event){
   reader.readAsArrayBuffer(file);
 }
 
+// ===== JAAR MODUS INVOER =====
+let boekInvoerModus = 'maand';
+
+function setBoekModus(modus){
+  boekInvoerModus = modus;
+  document.getElementById('boek-modus-maand').className = 'type-btn' + (modus==='maand'?' active-week':'');
+  document.getElementById('boek-modus-jaar').className = 'type-btn' + (modus==='jaar'?' active-ijk':'');
+  document.getElementById('boek-invoer-maand-sectie').style.display = modus==='maand'?'':'none';
+  document.getElementById('boek-invoer-jaar-sectie').style.display = modus==='jaar'?'':'none';
+  if(modus==='jaar') laadBoekingJaar();
+}
+
+function laadBoekingJaar(){
+  const jaar = parseInt(document.getElementById('boek-jaar-volledig').value);
+  if(!jaar) return;
+  const vorigJaar = jaar - 1;
+  const alleNamen = [...new Set([...MEDEWERKERS, ...getAlleNamenInJaar(jaar)])];
+  const tbody = document.getElementById('boek-jaar-body');
+
+  tbody.innerHTML = alleNamen.map(naam=>{
+    const isOud = !MEDEWERKERS.includes(naam);
+    const cellen = Array.from({length:12},(_,m)=>{
+      const key = `${jaar}-${String(m+1).padStart(2,'0')}`;
+      const vjKey = `${vorigJaar}-${String(m+1).padStart(2,'0')}`;
+      const v = boekingen[key]?.[naam];
+      const vj = boekingen[vjKey]?.[naam];
+      let title = vj!==undefined ? `Vorig jaar: ${vj.toLocaleString('nl-NL')}` : '';
+      return `<td style="padding:3px;"><input type="number" min="0"
+        class="num-input" style="width:52px;font-size:12px;padding:4px 3px;text-align:center;"
+        value="${v!==undefined?v:''}" placeholder="—"
+        title="${title}"
+        oninput="updateJaarRijTotaal(this,'${naam.replace(/'/g,"\\'")}','${jaar}')"></td>`;
+    }).join('');
+    const totaal = Array.from({length:12},(_,m)=>{
+      const key=`${jaar}-${String(m+1).padStart(2,'0')}`;
+      return boekingen[key]?.[naam]||0;
+    }).reduce((a,b)=>a+b,0);
+
+    return `<tr data-naam="${naam}">
+      <td class="med-naam" style="font-size:12px;${isOud?'color:var(--text-muted)':''}">${naam}${isOud?' <span style="font-size:10px;opacity:0.6">(oud)</span>':''}</td>
+      ${cellen}
+      <td style="text-align:center;font-weight:700;color:var(--gold);font-size:12px;" id="jaar-totaal-${naam.replace(/[^a-zA-Z0-9]/g,'_')}">${totaal>0?totaal.toLocaleString('nl-NL'):'—'}</td>
+    </tr>`;
+  }).join('');
+
+  // Totaalrij
+  const totaalCellen = Array.from({length:12},(_,m)=>{
+    const key=`${jaar}-${String(m+1).padStart(2,'0')}`;
+    const s=Object.values(boekingen[key]||{}).reduce((a,b)=>a+(b||0),0);
+    return `<td style="text-align:center;font-weight:700;color:var(--gold);font-size:12px">${s>0?s.toLocaleString('nl-NL'):'—'}</td>`;
+  }).join('');
+
+  tbody.innerHTML += `<tr style="border-top:2px solid var(--border)">
+    <td style="color:var(--text-muted);font-size:10px;font-weight:600">TOTAAL</td>
+    ${totaalCellen}
+    <td></td>
+  </tr>`;
+}
+
+function updateJaarRijTotaal(inp, naam, jaar){
+  const naamId = naam.replace(/[^a-zA-Z0-9]/g,'_');
+  const tr = inp.closest('tr');
+  const inputs = tr.querySelectorAll('input[type=number]');
+  let totaal=0;
+  inputs.forEach(i=>{ const v=parseInt(i.value); if(!isNaN(v)) totaal+=v; });
+  const el = document.getElementById(`jaar-totaal-${naamId}`);
+  if(el) el.textContent = totaal>0 ? totaal.toLocaleString('nl-NL') : '—';
+}
+
+function slaBoekingJaarOp(){
+  const jaar = parseInt(document.getElementById('boek-jaar-volledig').value);
+  if(!jaar){ alert('Vul een jaar in.'); return; }
+  const tbody = document.getElementById('boek-jaar-body');
+  tbody.querySelectorAll('tr[data-naam]').forEach(tr=>{
+    const naam = tr.dataset.naam;
+    tr.querySelectorAll('input[type=number]').forEach((inp,m)=>{
+      if(inp.value==='') return;
+      const v = parseInt(inp.value);
+      const key = `${jaar}-${String(m+1).padStart(2,'0')}`;
+      if(!boekingen[key]) boekingen[key]={};
+      boekingen[key][naam] = v;
+    });
+  });
+  localStorage.setItem('bb_boekingen',JSON.stringify(boekingen));
+  slaBoekingOpInSheets();
+  renderBoekingen();
+  const msg=document.getElementById('boek-jaar-save-msg');
+  msg.style.display='inline'; setTimeout(()=>msg.style.display='none',2500);
+}
+
+function voegJaarNaamToe(){
+  const naam = prompt('Naam toevoegen:');
+  if(!naam||!naam.trim()) return;
+  const tbody = document.getElementById('boek-jaar-body');
+  const bestaand=[...tbody.querySelectorAll('tr[data-naam]')].map(tr=>tr.dataset.naam);
+  if(bestaand.includes(naam.trim())){ alert(`${naam} staat er al in.`); return; }
+  // Herlaad het scherm met de nieuwe naam erbij
+  const jaar = parseInt(document.getElementById('boek-jaar-volledig').value);
+  if(!boekingen[`${jaar}-01`]) boekingen[`${jaar}-01`]={};
+  boekingen[`${jaar}-01`][naam.trim()] = boekingen[`${jaar}-01`][naam.trim()]||undefined;
+  laadBoekingJaar();
+}
+
+// ===== CUMULATIEVE GRAFIEK =====
+function getCumulatiefPunten(jaar){
+  let cum=0;
+  const punten=[];
+  for(let m=0;m<12;m++){
+    const key=`${jaar}-${String(m+1).padStart(2,'0')}`;
+    const v=Object.values(boekingen[key]||{}).reduce((a,b)=>a+(b||0),0);
+    if(v>0||cum>0){ cum+=v; punten.push({m,v:cum}); }
+  }
+  return punten;
+}
+
+function renderCumulatiefGrafiek(){
+  const el=document.getElementById('boek-grafiek-cumulatief');
+  if(!el) return;
+  if(boekGrafiekJaren.length===0||Object.keys(boekingen).length===0){ el.innerHTML=''; return; }
+
+  const DASH=['','6,3','3,3','8,2,2,2'];
+  const dataset=boekGrafiekJaren.map((jaar,i)=>({
+    naam:jaar, kleur:JAAR_KLEUREN[i%JAAR_KLEUREN.length],
+    dash:DASH[i%DASH.length], punten:getCumulatiefPunten(jaar)
+  })).filter(d=>d.punten.length>0);
+
+  if(dataset.length===0){ el.innerHTML=''; return; }
+
+  const svg=maakSVGGrafiek(dataset,900,220,{t:28,r:20,b:50,l:60},'Cumulatief team totaal per jaar',false);
+
+  const legenda=`<div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:10px;padding:10px 14px;background:var(--navy-light);border-radius:6px;">
+    ${dataset.map((d,i)=>{
+      const eindtotaal=d.punten[d.punten.length-1]?.v||0;
+      const dashStijl=d.dash?`border-top:2px dashed ${d.kleur}`:`border-top:2px solid ${d.kleur}`;
+      return `<div style="display:flex;align-items:center;gap:6px;">
+        <span style="display:inline-block;width:28px;${dashStijl};margin-top:2px;"></span>
+        <span style="font-size:12px;font-weight:600;color:${d.kleur}">${d.naam}</span>
+        <span style="font-size:11px;color:var(--text-muted);">(${eindtotaal.toLocaleString('nl-NL')} totaal)</span>
+      </div>`;
+    }).join('')}
+  </div>`;
+
+  el.innerHTML=`<div style="overflow-x:auto">${svg}</div>${legenda}`;
+}
+
 // ===== BOEKINGEN =====
 // boekingen = { "2024-01": { "Cennet": 150, "Dennis": 200, ... }, ... }
 
@@ -1874,6 +2050,7 @@ function renderBoekingen(){
   renderBoekJaarPills();
   renderBoekTabel();
   renderBoekGrafiek();
+  renderCumulatiefGrafiek();
   renderBoekVergelijk();
   renderNamenBeheer();
 }
