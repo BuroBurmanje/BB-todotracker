@@ -268,6 +268,7 @@
     <button class="nav-tab" onclick="showTab('normen',this)">Normen</button>
     <button class="nav-tab" onclick="showTab('rapporten',this)">📄 Rapporten</button>
     <button class="nav-tab" onclick="showTab('boekingen',this)">📅 Boekingen</button>
+    <button class="nav-tab" onclick="showTab('analyse',this)">📊 Analyse</button>
   </nav>
   <div style="display:flex;gap:6px;margin-left:8px;align-items:center;">
     <span id="sync-status" style="font-size:11px;color:var(--text-muted);white-space:nowrap;"></span>
@@ -510,13 +511,22 @@
         </div>
         <div style="overflow-x:auto;">
           <table class="invoer-table" id="boek-jaar-table">
-            <thead>
-              <tr>
-                <th style="min-width:110px">Medewerker</th>
-                ${['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'].map(m=>`<th style="text-align:center;min-width:58px">${m}</th>`).join('')}
-                <th style="text-align:center">Totaal</th>
-              </tr>
-            </thead>
+            <thead id="boek-jaar-thead"><tr>
+              <th style="min-width:110px">Medewerker</th>
+              <th style="text-align:center;min-width:58px">Jan</th>
+              <th style="text-align:center;min-width:58px">Feb</th>
+              <th style="text-align:center;min-width:58px">Mrt</th>
+              <th style="text-align:center;min-width:58px">Apr</th>
+              <th style="text-align:center;min-width:58px">Mei</th>
+              <th style="text-align:center;min-width:58px">Jun</th>
+              <th style="text-align:center;min-width:58px">Jul</th>
+              <th style="text-align:center;min-width:58px">Aug</th>
+              <th style="text-align:center;min-width:58px">Sep</th>
+              <th style="text-align:center;min-width:58px">Okt</th>
+              <th style="text-align:center;min-width:58px">Nov</th>
+              <th style="text-align:center;min-width:58px">Dec</th>
+              <th style="text-align:center;min-width:70px">Totaal</th>
+            </tr></thead>
             <tbody id="boek-jaar-body"></tbody>
           </table>
         </div>
@@ -551,6 +561,72 @@
     <!-- Vergelijk -->
     <div style="font-size:11px;color:var(--gold);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px;">Vergelijk met vorig jaar</div>
     <div id="boek-vergelijk-content"></div>
+  </div>
+</div>
+
+<!-- ANALYSE -->
+<div id="tab-analyse" class="tab-content">
+  <div class="card">
+    <div class="card-title">📊 Boekingen Analyse</div>
+
+    <!-- Jaar filter voor analyse -->
+    <div style="background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <span style="font-size:12px;color:var(--text-muted);font-weight:600;">Analyseer jaren:</span>
+      <div id="analyse-jaar-pills" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
+
+    <!-- SECTIE 1: Vergelijking & Trend -->
+    <div style="font-size:12px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);">📈 Vergelijking & Trend</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;" id="analyse-trend-grid">
+      <div style="background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:14px;">
+        <div style="font-size:12px;font-weight:600;color:var(--white);margin-bottom:10px;">Gemiddelde per maand over alle jaren</div>
+        <div id="analyse-gemiddeld"></div>
+      </div>
+      <div style="background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:14px;">
+        <div style="font-size:12px;font-weight:600;color:var(--white);margin-bottom:10px;">Maand-op-maand groei (huidig jaar)</div>
+        <div id="analyse-mom-groei"></div>
+      </div>
+    </div>
+
+    <div style="background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:20px;">
+      <div style="font-size:12px;font-weight:600;color:var(--white);margin-bottom:10px;">Beste & slechtste maand ooit per medewerker</div>
+      <div id="analyse-best-worst"></div>
+    </div>
+
+    <!-- SECTIE 2: Aandeel & Verdeling -->
+    <div style="font-size:12px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);">🥧 Aandeel & Verdeling</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+      <div style="background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:14px;">
+        <div style="font-size:12px;font-weight:600;color:var(--white);margin-bottom:10px;">Aandeel per medewerker (geselecteerde jaren)</div>
+        <div id="analyse-aandeel"></div>
+      </div>
+      <div style="background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:14px;">
+        <div style="font-size:12px;font-weight:600;color:var(--white);margin-bottom:10px;">Meest constante medewerker</div>
+        <div id="analyse-constante"></div>
+      </div>
+    </div>
+
+    <div style="background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:20px;">
+      <div style="font-size:12px;font-weight:600;color:var(--white);margin-bottom:10px;">Staafdiagram — aandeel per medewerker per maand</div>
+      <div id="analyse-staaf-jaar-select" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;"></div>
+      <div id="analyse-staaf"></div>
+    </div>
+
+    <!-- SECTIE 3: Seizoenspatroon -->
+    <div style="font-size:12px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);">🌊 Seizoenspatroon</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div style="background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:14px;">
+        <div style="font-size:12px;font-weight:600;color:var(--white);margin-bottom:10px;">Drukste & rustigste maanden</div>
+        <div id="analyse-seizoen"></div>
+      </div>
+      <div style="background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:14px;">
+        <div style="font-size:12px;font-weight:600;color:var(--white);margin-bottom:10px;">Seizoensindex per maand</div>
+        <div id="analyse-seizoen-grafiek"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1581,6 +1657,331 @@ function renderInstellingen(){
   if(urlInp) urlInp.value = SCRIPT_URL;
 }
 
+// ===== ANALYSE =====
+let analyseJaren = [];
+let analyseStaafJaar = null;
+
+const MED_KLEUREN2 = ['#4caf7d','#5b9bd5','#c9a84c','#e05252','#a78bfa','#f97316','#22d3ee','#fb7185','#84cc16','#38bdf8','#f472b6','#facc15'];
+
+function renderAnalyse(){
+  const alleJaren = [...new Set(Object.keys(boekingen).map(k=>k.slice(0,4)))].sort();
+  if(alleJaren.length===0){
+    ['analyse-gemiddeld','analyse-mom-groei','analyse-best-worst','analyse-aandeel','analyse-constante','analyse-staaf','analyse-seizoen','analyse-seizoen-grafiek']
+      .forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML='<div class="empty-state"><div class="icon">📊</div>Geen data.</div>'; });
+    return;
+  }
+
+  if(analyseJaren.length===0) analyseJaren=[...alleJaren];
+  if(!analyseStaafJaar) analyseStaafJaar=alleJaren[alleJaren.length-1];
+
+  // Jaar pills
+  document.getElementById('analyse-jaar-pills').innerHTML =
+    alleJaren.map(j=>`<span class="med-pill ${analyseJaren.includes(j)?'active':''}" onclick="toggleAnalyseJaar('${j}')">${j}</span>`).join('');
+
+  // Staaf jaar selector
+  document.getElementById('analyse-staaf-jaar-select').innerHTML =
+    `<span style="font-size:11px;color:var(--text-muted)">Jaar:</span>` +
+    alleJaren.map(j=>`<span class="med-pill ${j===analyseStaafJaar?'active':''}" onclick="selectAnalyseStaafJaar('${j}')">${j}</span>`).join('');
+
+  renderAnalyseGemiddeld();
+  renderAnalyseMoMGroei();
+  renderAnalyseBestWorst();
+  renderAnalyseAandeel();
+  renderAnalyseConstante();
+  renderAnalyseStaaf();
+  renderAnalyseSeizoen();
+}
+
+function toggleAnalyseJaar(j){
+  if(analyseJaren.includes(j)){ if(analyseJaren.length<=1) return; analyseJaren=analyseJaren.filter(x=>x!==j); }
+  else { analyseJaren.push(j); analyseJaren.sort(); }
+  renderAnalyse();
+}
+
+function selectAnalyseStaafJaar(j){ analyseStaafJaar=j; renderAnalyseStaaf(); renderAnalyseAandeel();
+  document.getElementById('analyse-staaf-jaar-select').innerHTML =
+    `<span style="font-size:11px;color:var(--text-muted)">Jaar:</span>` +
+    [...new Set(Object.keys(boekingen).map(k=>k.slice(0,4)))].sort().map(jj=>`<span class="med-pill ${jj===analyseStaafJaar?'active':''}" onclick="selectAnalyseStaafJaar('${jj}')">${jj}</span>`).join('');
+}
+
+// Helper: teamtotaal per maand voor een set jaren
+function getTeamTotaalPerMaand(jaren){
+  return Array.from({length:12},(_,m)=>
+    jaren.reduce((a,j)=>{
+      const key=`${j}-${String(m+1).padStart(2,'0')}`;
+      return a+Object.values(boekingen[key]||{}).reduce((x,y)=>x+(y||0),0);
+    },0)
+  );
+}
+
+// 1. Gemiddelde per maand
+function renderAnalyseGemiddeld(){
+  const el=document.getElementById('analyse-gemiddeld');
+  const totalen=getTeamTotaalPerMaand(analyseJaren);
+  const maxV=Math.max(...totalen,1);
+  const gemiddeld=totalen.map(v=>Math.round(v/analyseJaren.length));
+  const overallGem=Math.round(gemiddeld.reduce((a,b)=>a+b,0)/12);
+
+  const bars=MAANDEN.map((m,i)=>{
+    const pct=Math.round((gemiddeld[i]/maxV)*100);
+    const kleur=gemiddeld[i]>overallGem?'var(--green)':'var(--gold)';
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+      <span style="font-size:11px;color:var(--text-muted);width:28px;text-align:right">${m}</span>
+      <div style="flex:1;background:var(--navy);border-radius:3px;height:14px;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:${kleur};border-radius:3px;"></div>
+      </div>
+      <span style="font-size:11px;font-weight:600;color:${kleur};width:60px;text-align:right">${gemiddeld[i].toLocaleString('nl-NL')}</span>
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Gemiddeld over ${analyseJaren.join(', ')} · Overall gem: <strong style="color:var(--white)">${overallGem.toLocaleString('nl-NL')}</strong></div>${bars}`;
+}
+
+// 2. Maand-op-maand groei (huidig = laatste jaar in selectie)
+function renderAnalyseMoMGroei(){
+  const el=document.getElementById('analyse-mom-groei');
+  const huidigJaar=analyseJaren[analyseJaren.length-1];
+  const waarden=Array.from({length:12},(_,m)=>{
+    const key=`${huidigJaar}-${String(m+1).padStart(2,'0')}`;
+    return Object.values(boekingen[key]||{}).reduce((a,b)=>a+(b||0),0);
+  });
+
+  const bars=MAANDEN.map((m,i)=>{
+    if(i===0||waarden[i]===0) return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+      <span style="font-size:11px;color:var(--text-muted);width:28px;text-align:right">${m}</span>
+      <span style="font-size:11px;color:var(--border)">${waarden[i]>0?waarden[i].toLocaleString('nl-NL'):'—'}</span>
+    </div>`;
+    const prev=waarden[i-1];
+    if(prev===0) return '';
+    const groei=waarden[i]-prev;
+    const pct=Math.round((groei/prev)*100);
+    const kleur=groei>=0?'var(--green)':'var(--red)';
+    const breedte=Math.min(100,Math.abs(pct)*2);
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+      <span style="font-size:11px;color:var(--text-muted);width:28px;text-align:right">${m}</span>
+      <div style="flex:1;background:var(--navy);border-radius:3px;height:14px;overflow:hidden;">
+        <div style="width:${breedte}%;height:100%;background:${kleur};border-radius:3px;"></div>
+      </div>
+      <span style="font-size:11px;font-weight:600;color:${kleur};width:70px;text-align:right">${groei>=0?'+':''}${pct}%</span>
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">t.o.v. vorige maand — ${huidigJaar}</div>${bars}`;
+}
+
+// 3. Beste & slechtste maand per medewerker
+function renderAnalyseBestWorst(){
+  const el=document.getElementById('analyse-best-worst');
+  const huidigTeam=[...MEDEWERKERS];
+
+  const rows=huidigTeam.map(naam=>{
+    const waarden=[];
+    analyseJaren.forEach(j=>{
+      for(let m=0;m<12;m++){
+        const key=`${j}-${String(m+1).padStart(2,'0')}`;
+        const v=boekingen[key]?.[naam];
+        if(v!==undefined&&v>0) waarden.push({label:`${MAANDEN[m]} ${j}`,v});
+      }
+    });
+    if(waarden.length===0) return '';
+    waarden.sort((a,b)=>b.v-a.v);
+    const best=waarden[0];
+    const worst=waarden[waarden.length-1];
+    const gem=Math.round(waarden.reduce((a,b)=>a+b.v,0)/waarden.length);
+    return `<tr>
+      <td style="font-weight:600;font-size:12px">${naam}</td>
+      <td style="text-align:center;color:var(--green);font-size:12px"><strong>${best.v.toLocaleString('nl-NL')}</strong><br><span style="font-size:10px;color:var(--text-muted)">${best.label}</span></td>
+      <td style="text-align:center;color:var(--red);font-size:12px"><strong>${worst.v.toLocaleString('nl-NL')}</strong><br><span style="font-size:10px;color:var(--text-muted)">${worst.label}</span></td>
+      <td style="text-align:center;color:var(--gold);font-size:12px">${gem.toLocaleString('nl-NL')}</td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML=`<table class="dash-table" style="font-size:12px">
+    <thead><tr><th>Medewerker</th><th style="text-align:center;color:var(--green)">🏆 Beste maand</th><th style="text-align:center;color:var(--red)">📉 Slechtste maand</th><th style="text-align:center">Gem/maand</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+// 4. Aandeel per medewerker
+function renderAnalyseAandeel(){
+  const el=document.getElementById('analyse-aandeel');
+  const totalen={};
+  MEDEWERKERS.forEach(n=>totalen[n]=0);
+
+  analyseJaren.forEach(j=>{
+    for(let m=0;m<12;m++){
+      const key=`${j}-${String(m+1).padStart(2,'0')}`;
+      Object.entries(boekingen[key]||{}).forEach(([naam,v])=>{
+        if(MEDEWERKERS.includes(naam)) totalen[naam]=(totalen[naam]||0)+(v||0);
+      });
+    }
+  });
+
+  const teamTotaal=Object.values(totalen).reduce((a,b)=>a+b,0);
+  if(teamTotaal===0){ el.innerHTML='<div style="color:var(--text-muted);font-size:12px">Geen data</div>'; return; }
+
+  const gesorteerd=Object.entries(totalen).sort((a,b)=>b[1]-a[1]).filter(([,v])=>v>0);
+
+  const bars=gesorteerd.map(([naam,v],i)=>{
+    const pct=Math.round((v/teamTotaal)*100);
+    const kleur=MED_KLEUREN2[MEDEWERKERS.indexOf(naam)%MED_KLEUREN2.length];
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <span style="font-size:11px;font-weight:600;color:${kleur};width:70px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${naam}</span>
+      <div style="flex:1;background:var(--navy);border-radius:3px;height:16px;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:${kleur};border-radius:3px;display:flex;align-items:center;padding-left:4px;">
+          ${pct>8?`<span style="font-size:10px;color:var(--navy);font-weight:700">${pct}%</span>`:''}
+        </div>
+      </div>
+      <span style="font-size:11px;color:var(--text-muted);width:55px;text-align:right">${pct}%</span>
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Totaal ${teamTotaal.toLocaleString('nl-NL')} boekingen · ${analyseJaren.join(', ')}</div>${bars}`;
+}
+
+// 5. Constante medewerker (laagste variatiecoëfficiënt)
+function renderAnalyseConstante(){
+  const el=document.getElementById('analyse-constante');
+  const scores=MEDEWERKERS.map(naam=>{
+    const waarden=[];
+    analyseJaren.forEach(j=>{
+      for(let m=0;m<12;m++){
+        const key=`${j}-${String(m+1).padStart(2,'0')}`;
+        const v=boekingen[key]?.[naam];
+        if(v!==undefined&&v>0) waarden.push(v);
+      }
+    });
+    if(waarden.length<3) return {naam,cv:999,gem:0,n:waarden.length};
+    const gem=waarden.reduce((a,b)=>a+b,0)/waarden.length;
+    const std=Math.sqrt(waarden.reduce((a,b)=>a+(b-gem)**2,0)/waarden.length);
+    const cv=Math.round((std/gem)*100);
+    return {naam,cv,gem:Math.round(gem),n:waarden.length};
+  }).filter(s=>s.gem>0).sort((a,b)=>a.cv-b.cv);
+
+  const maxCV=Math.max(...scores.map(s=>s.cv),1);
+  const rows=scores.map((s,i)=>{
+    const kleur=i===0?'var(--green)':i===scores.length-1?'var(--red)':'var(--text-muted)';
+    const consistentie=100-Math.min(100,s.cv);
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <span style="font-size:11px;font-weight:600;color:${kleur};width:70px">${s.naam}</span>
+      <div style="flex:1;background:var(--navy);border-radius:3px;height:14px;overflow:hidden;">
+        <div style="width:${consistentie}%;height:100%;background:${kleur};border-radius:3px;opacity:0.8;"></div>
+      </div>
+      <span style="font-size:10px;color:var(--text-muted);width:80px;text-align:right">var: ${s.cv}% · gem: ${s.gem.toLocaleString('nl-NL')}</span>
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Lage variatie = meest consistent. Gebaseerd op ${analyseJaren.join(', ')}.</div>
+    ${scores[0]?`<div style="font-size:12px;font-weight:600;color:var(--green);margin-bottom:8px;">🏅 Meest constant: ${scores[0].naam}</div>`:''}
+    ${rows}`;
+}
+
+// 6. Staafdiagram aandeel per maand
+function renderAnalyseStaaf(){
+  const el=document.getElementById('analyse-staaf');
+  if(!analyseStaafJaar){ el.innerHTML=''; return; }
+
+  const W=900,H=220,PAD={t:20,r:20,b:50,l:52};
+  const gW=W-PAD.l-PAD.r, gH=H-PAD.t-PAD.b;
+
+  // Per maand: gestapelde balk per medewerker
+  const maandTotalen=Array.from({length:12},(_,m)=>{
+    const key=`${analyseStaafJaar}-${String(m+1).padStart(2,'0')}`;
+    return MEDEWERKERS.reduce((acc,naam)=>{ acc[naam]=boekingen[key]?.[naam]||0; return acc; },{});
+  });
+  const maxTotaal=Math.max(...maandTotalen.map(mt=>Object.values(mt).reduce((a,b)=>a+b,0)),1);
+  const breedte=Math.floor(gW/12)-4;
+
+  let staven='';
+  maandTotalen.forEach((mt,m)=>{
+    const xBase=PAD.l+m*(gW/12)+2;
+    let yStart=PAD.t+gH;
+    MEDEWERKERS.forEach((naam,ni)=>{
+      const v=mt[naam]||0;
+      if(v===0) return;
+      const h=Math.max(1,(v/maxTotaal)*gH);
+      yStart-=h;
+      const kleur=MED_KLEUREN2[ni%MED_KLEUREN2.length];
+      staven+=`<rect x="${xBase}" y="${yStart}" width="${breedte}" height="${h}" fill="${kleur}" opacity="0.85">
+        <title>${naam}: ${v.toLocaleString('nl-NL')}</title></rect>`;
+    });
+  });
+
+  const xLabels=MAANDEN.map((m,i)=>`<text x="${PAD.l+i*(gW/12)+breedte/2}" y="${H-PAD.b+16}" text-anchor="middle" fill="var(--text-muted)" font-size="10" font-family="Inter,sans-serif">${m}</text>`).join('');
+  const yTicks=[0,Math.round(maxTotaal*0.25),Math.round(maxTotaal*0.5),Math.round(maxTotaal*0.75),Math.round(maxTotaal)];
+  const yAxis=yTicks.map(v=>`<line x1="${PAD.l-4}" y1="${PAD.t+gH-(v/maxTotaal)*gH}" x2="${PAD.l+gW}" y2="${PAD.t+gH-(v/maxTotaal)*gH}" stroke="var(--border)" stroke-width="0.5"/>
+    <text x="${PAD.l-8}" y="${PAD.t+gH-(v/maxTotaal)*gH+4}" text-anchor="end" fill="var(--text-muted)" font-size="10" font-family="Inter,sans-serif">${v>=1000?Math.round(v/1000)+'k':v}</text>`).join('');
+
+  const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" xmlns="http://www.w3.org/2000/svg" style="background:var(--navy-mid);border-radius:8px">
+    <rect width="${W}" height="${H}" fill="var(--navy-mid)" rx="8"/>
+    ${yAxis}${staven}${xLabels}
+    <text x="${PAD.l}" y="16" fill="var(--gold)" font-size="11" font-weight="600" font-family="Inter,sans-serif">Aandeel per medewerker — ${analyseStaafJaar}</text>
+  </svg>`;
+
+  // Legenda
+  const leg=MEDEWERKERS.map((naam,i)=>`<div style="display:flex;align-items:center;gap:5px;">
+    <span style="width:12px;height:12px;border-radius:2px;background:${MED_KLEUREN2[i%MED_KLEUREN2.length]};display:inline-block;flex-shrink:0;"></span>
+    <span style="font-size:11px;color:${MED_KLEUREN2[i%MED_KLEUREN2.length]}">${naam}</span>
+  </div>`).join('');
+
+  el.innerHTML=`<div style="overflow-x:auto">${svg}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;padding:8px 12px;background:var(--navy-light);border-radius:6px;">${leg}</div>`;
+}
+
+// 7. Seizoenspatroon
+function renderAnalyseSeizoen(){
+  const el1=document.getElementById('analyse-seizoen');
+  const el2=document.getElementById('analyse-seizoen-grafiek');
+
+  const maandGem=Array.from({length:12},(_,m)=>{
+    const waarden=analyseJaren.map(j=>{
+      const key=`${j}-${String(m+1).padStart(2,'0')}`;
+      return Object.values(boekingen[key]||{}).reduce((a,b)=>a+(b||0),0);
+    }).filter(v=>v>0);
+    return waarden.length>0?Math.round(waarden.reduce((a,b)=>a+b,0)/waarden.length):0;
+  });
+
+  const overallGem=Math.round(maandGem.filter(v=>v>0).reduce((a,b)=>a+b,0)/maandGem.filter(v=>v>0).length)||1;
+  const gesorteerd=[...maandGem.map((v,i)=>({m:i,v}))].sort((a,b)=>b.v-a.v).filter(x=>x.v>0);
+
+  // Top 3 drukst en rustigst
+  const drukst=gesorteerd.slice(0,3).map(x=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+    <span style="font-size:14px">🔥</span>
+    <span style="font-size:12px;font-weight:600;color:var(--white)">${MAANDEN_LANG[x.m]}</span>
+    <span style="font-size:12px;color:var(--green)">${x.v.toLocaleString('nl-NL')}</span>
+  </div>`).join('');
+  const rustigst=gesorteerd.slice(-3).reverse().map(x=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+    <span style="font-size:14px">😴</span>
+    <span style="font-size:12px;font-weight:600;color:var(--white)">${MAANDEN_LANG[x.m]}</span>
+    <span style="font-size:12px;color:var(--text-muted)">${x.v.toLocaleString('nl-NL')}</span>
+  </div>`).join('');
+
+  el1.innerHTML=`
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">Gemiddeld over ${analyseJaren.join(', ')}</div>
+    <div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Drukste maanden</div>${drukst}</div>
+    <div><div style="font-size:11px;color:var(--text-muted);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Rustigste maanden</div>${rustigst}</div>`;
+
+  // Seizoensindex grafiek (index = maandgem / overallgem * 100)
+  const index=maandGem.map(v=>v>0?Math.round((v/overallGem)*100):0);
+  const maxIdx=Math.max(...index,1);
+  const bars=MAANDEN.map((m,i)=>{
+    if(index[i]===0) return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+      <span style="font-size:10px;color:var(--text-muted);width:28px;text-align:right">${m}</span>
+      <span style="font-size:10px;color:var(--border)">—</span></div>`;
+    const pct=Math.round((index[i]/maxIdx)*100);
+    const kleur=index[i]>110?'var(--green)':index[i]<90?'var(--red)':'var(--gold)';
+    return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+      <span style="font-size:10px;color:var(--text-muted);width:28px;text-align:right">${m}</span>
+      <div style="flex:1;background:var(--navy);border-radius:3px;height:12px;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:${kleur};border-radius:3px;"></div>
+      </div>
+      <span style="font-size:10px;font-weight:600;color:${kleur};width:40px;text-align:right">${index[i]}</span>
+    </div>`;
+  }).join('');
+
+  el2.innerHTML=`<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Index 100 = gemiddeld · >110 = druk · <90 = rustig</div>${bars}`;
+}
+
 // ===== NAVIGATIE =====
 function showTab(name, btn){
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
@@ -1595,6 +1996,7 @@ function showTab(name, btn){
   if(name==='instellingen') renderInstellingen();
   if(name==='normen') renderTeam();
   if(name==='boekingen'){ renderBoekingen(); }
+  if(name==='analyse'){ renderAnalyse(); }
 }
 
 // ===== NAMEN BEHEER =====
@@ -1781,47 +2183,85 @@ function laadBoekingJaar(){
   const jaar = parseInt(document.getElementById('boek-jaar-volledig').value);
   if(!jaar) return;
   const vorigJaar = jaar - 1;
-  const alleNamen = [...new Set([...MEDEWERKERS, ...getAlleNamenInJaar(jaar)])];
+
+  // Alle namen: huidig team + Yuki + eventuele oud-medewerkers in dit jaar
+  const alleNamen = [...new Set([...MEDEWERKERS, 'Yuki', ...getAlleNamenInJaar(jaar)])];
   const tbody = document.getElementById('boek-jaar-body');
 
-  tbody.innerHTML = alleNamen.map(naam=>{
-    const isOud = !MEDEWERKERS.includes(naam);
+  const maakInvoerRij = (naam, stijlKlasse) => {
+    const isOud = !MEDEWERKERS.includes(naam) && naam !== 'Yuki';
+    const isYuki = naam === 'Yuki';
+    const naamId = naam.replace(/[^a-zA-Z0-9]/g,'_');
+
+    // Bereken bestaand totaal
+    let huidigTotaal = 0;
     const cellen = Array.from({length:12},(_,m)=>{
       const key = `${jaar}-${String(m+1).padStart(2,'0')}`;
       const vjKey = `${vorigJaar}-${String(m+1).padStart(2,'0')}`;
       const v = boekingen[key]?.[naam];
       const vj = boekingen[vjKey]?.[naam];
-      let title = vj!==undefined ? `Vorig jaar: ${vj.toLocaleString('nl-NL')}` : '';
-      return `<td style="padding:3px;"><input type="number" min="0"
+      if(v!==undefined) huidigTotaal+=v;
+      const title = vj!==undefined ? `Vorig jaar: ${vj.toLocaleString('nl-NL')}` : '';
+      const bgColor = isYuki ? 'background:rgba(201,168,76,0.08);' : '';
+      return `<td style="padding:3px;${bgColor}"><input type="number" min="0"
         class="num-input" style="width:52px;font-size:12px;padding:4px 3px;text-align:center;"
         value="${v!==undefined?v:''}" placeholder="—"
         title="${title}"
         oninput="updateJaarRijTotaal(this,'${naam.replace(/'/g,"\\'")}','${jaar}')"></td>`;
     }).join('');
-    const totaal = Array.from({length:12},(_,m)=>{
-      const key=`${jaar}-${String(m+1).padStart(2,'0')}`;
-      return boekingen[key]?.[naam]||0;
-    }).reduce((a,b)=>a+b,0);
 
-    return `<tr data-naam="${naam}">
-      <td class="med-naam" style="font-size:12px;${isOud?'color:var(--text-muted)':''}">${naam}${isOud?' <span style="font-size:10px;opacity:0.6">(oud)</span>':''}</td>
+    let naamStijl = 'font-size:12px;font-weight:600;';
+    if(isOud) naamStijl += 'color:var(--text-muted);';
+    if(isYuki) naamStijl += 'color:var(--gold);';
+
+    const label = isYuki
+      ? `Yuki <span style="font-size:10px;color:var(--text-muted);font-weight:400">(automatisering)</span>`
+      : naam + (isOud ? ` <span style="font-size:10px;opacity:0.6">(oud)</span>` : '');
+
+    return `<tr data-naam="${naam}" style="${isYuki?'background:rgba(201,168,76,0.05);border-top:1px solid rgba(201,168,76,0.3);':''}">
+      <td class="med-naam" style="${naamStijl}">${label}</td>
       ${cellen}
-      <td style="text-align:center;font-weight:700;color:var(--gold);font-size:12px;" id="jaar-totaal-${naam.replace(/[^a-zA-Z0-9]/g,'_')}">${totaal>0?totaal.toLocaleString('nl-NL'):'—'}</td>
+      <td style="text-align:center;font-weight:700;color:${isYuki?'var(--gold)':isOud?'var(--text-muted)':'var(--gold)'};font-size:12px;" id="jaar-totaal-${naamId}">${huidigTotaal>0?huidigTotaal.toLocaleString('nl-NL'):'—'}</td>
     </tr>`;
-  }).join('');
+  };
 
-  // Totaalrij
-  const totaalCellen = Array.from({length:12},(_,m)=>{
+  // Huidig team
+  const teamRows = MEDEWERKERS.map(n=>maakInvoerRij(n, '')).join('');
+
+  // Oud-medewerkers in dit jaar (niet in huidig team, niet Yuki)
+  const oudInJaar = getAlleNamenInJaar(jaar).filter(n=>!MEDEWERKERS.includes(n)&&n!=='Yuki');
+  const oudRows = oudInJaar.map(n=>maakInvoerRij(n,'')).join('');
+
+  // Yuki rij
+  const yukiRow = maakInvoerRij('Yuki','');
+
+  // Totaalrijen
+  const berekenMaandTotaal = (inclYuki) => Array.from({length:12},(_,m)=>{
     const key=`${jaar}-${String(m+1).padStart(2,'0')}`;
-    const s=Object.values(boekingen[key]||{}).reduce((a,b)=>a+(b||0),0);
-    return `<td style="text-align:center;font-weight:700;color:var(--gold);font-size:12px">${s>0?s.toLocaleString('nl-NL'):'—'}</td>`;
-  }).join('');
+    return Object.entries(boekingen[key]||{}).reduce((a,[naam,v])=>{
+      if(!inclYuki && naam==='Yuki') return a;
+      return a+(v||0);
+    },0);
+  });
 
-  tbody.innerHTML += `<tr style="border-top:2px solid var(--border)">
-    <td style="color:var(--text-muted);font-size:10px;font-weight:600">TOTAAL</td>
-    ${totaalCellen}
-    <td></td>
-  </tr>`;
+  const totaalZonderYuki = berekenMaandTotaal(false);
+  const totaalMetYuki = berekenMaandTotaal(true);
+  const totaalZonderYukiJaar = totaalZonderYuki.reduce((a,b)=>a+b,0);
+  const totaalMetYukiJaar = totaalMetYuki.reduce((a,b)=>a+b,0);
+
+  const maakTotaalRij = (label, waarden, jaarTotaal, kleur) =>
+    `<tr style="border-top:2px solid var(--border);background:var(--navy)">
+      <td style="color:${kleur};font-size:10px;font-weight:600">${label}</td>
+      ${waarden.map(v=>`<td style="text-align:center;font-weight:700;color:${kleur};font-size:12px">${v>0?v.toLocaleString('nl-NL'):'—'}</td>`).join('')}
+      <td style="text-align:center;font-weight:700;color:${kleur};font-size:12px">${jaarTotaal>0?jaarTotaal.toLocaleString('nl-NL'):'—'}</td>
+    </tr>`;
+
+  tbody.innerHTML =
+    teamRows +
+    (oudRows ? `<tr><td colspan="14" style="padding:4px 8px;font-size:10px;color:var(--text-muted);background:var(--navy)">Oud-medewerkers</td></tr>${oudRows}` : '') +
+    `<tr><td colspan="14" style="padding:0;"></td></tr>` +
+    yukiRow +
+    maakTotaalRij('TOTAAL', totaalMetYuki, totaalMetYukiJaar, 'var(--gold)');
 }
 
 function updateJaarRijTotaal(inp, naam, jaar){
