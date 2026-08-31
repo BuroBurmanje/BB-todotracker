@@ -1812,7 +1812,7 @@ function laadBoekingMaand(){
 
   // Alle namen: huidige medewerkers + namen in bestaande data
   const alleNamen = [...new Set([...MEDEWERKERS, ...Object.keys(bestaand)])];
-  
+
   const tbody = document.getElementById('boek-invoer-body');
   tbody.innerHTML = alleNamen.map(naam=>{
     const v = bestaand[naam];
@@ -1820,14 +1820,36 @@ function laadBoekingMaand(){
     let verschil = '';
     if(v!==undefined && vj!==undefined){
       const d = v - vj;
-      verschil = d>0 ? `<span style="color:var(--green)">↑${d}</span>` : d<0 ? `<span style="color:var(--red)">↓${Math.abs(d)}</span>` : `<span style="color:var(--text-muted)">→</span>`;
+      verschil = d>0 ? `<span style="color:var(--green)">↑${d.toLocaleString('nl-NL')}</span>` : d<0 ? `<span style="color:var(--red)">↓${Math.abs(d).toLocaleString('nl-NL')}</span>` : `<span style="color:var(--text-muted)">→</span>`;
     }
     return `<tr data-naam="${naam}">
       <td class="med-naam">${naam}${!MEDEWERKERS.includes(naam)?` <span style="font-size:10px;color:var(--text-muted)">(oud)</span>`:''}</td>
-      <td><input type="number" min="0" class="num-input" value="${v!==undefined?v:''}" placeholder="—" style="width:80px;"></td>
+      <td><input type="number" min="0" class="num-input" value="${v!==undefined?v:''}" placeholder="—" style="width:90px;" oninput="updateBoekTotaal()"></td>
       <td style="font-size:13px;text-align:center;min-width:80px;">${verschil||'—'}</td>
     </tr>`;
   }).join('');
+
+  // Totaalrij
+  const totaalVorigJaar = Object.values(vorigJaar).reduce((a,b)=>a+(b||0),0);
+  tbody.innerHTML += `<tr style="border-top:2px solid var(--border);background:var(--navy)">
+    <td class="med-naam" style="color:var(--gold);font-weight:700">Totaal</td>
+    <td style="padding:6px 5px;"><span id="boek-invoer-totaal" style="font-size:15px;font-weight:700;color:var(--gold)">0</span></td>
+    <td style="text-align:center;font-size:12px;color:var(--text-muted)">Vorig jaar: <strong style="color:var(--white)">${totaalVorigJaar.toLocaleString('nl-NL')}</strong></td>
+  </tr>`;
+
+  updateBoekTotaal();
+}
+
+function updateBoekTotaal(){
+  const tbody = document.getElementById('boek-invoer-body');
+  if(!tbody) return;
+  let totaal = 0;
+  tbody.querySelectorAll('tr[data-naam] input[type=number]').forEach(inp=>{
+    const v = parseInt(inp.value);
+    if(!isNaN(v)) totaal += v;
+  });
+  const el = document.getElementById('boek-invoer-totaal');
+  if(el) el.textContent = totaal.toLocaleString('nl-NL');
 }
 
 function voegOudMedewerkerToe(){
