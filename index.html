@@ -2429,11 +2429,13 @@ function laadBoekingMaand(){
   const bestaand = boekingen[key] || {};
   const vorigJaar = boekingen[vorigJaarKey] || {};
 
-  // Alle namen: huidige medewerkers + namen in bestaande data
-  const alleNamen = [...new Set([...MEDEWERKERS, ...Object.keys(bestaand)])];
+  // Alle namen: huidige medewerkers + Yuki + namen in bestaande data
+  const alleNamen = [...new Set([...MEDEWERKERS, 'Yuki', ...Object.keys(bestaand)])];
 
   const tbody = document.getElementById('boek-invoer-body');
   tbody.innerHTML = alleNamen.map(naam=>{
+    const isYuki = naam === 'Yuki';
+    const isOud = !MEDEWERKERS.includes(naam) && !isYuki;
     const v = bestaand[naam];
     const vj = vorigJaar[naam];
     let verschil = '';
@@ -2441,8 +2443,12 @@ function laadBoekingMaand(){
       const d = v - vj;
       verschil = d>0 ? `<span style="color:var(--green)">↑${d.toLocaleString('nl-NL')}</span>` : d<0 ? `<span style="color:var(--red)">↓${Math.abs(d).toLocaleString('nl-NL')}</span>` : `<span style="color:var(--text-muted)">→</span>`;
     }
-    return `<tr data-naam="${naam}">
-      <td class="med-naam">${naam}${!MEDEWERKERS.includes(naam)?` <span style="font-size:10px;color:var(--text-muted)">(oud)</span>`:''}</td>
+    const naamLabel = isYuki
+      ? `<span style="color:var(--gold)">Yuki</span> <span style="font-size:10px;color:var(--text-muted)">(automatisering)</span>`
+      : naam + (isOud ? ` <span style="font-size:10px;color:var(--text-muted)">(oud)</span>` : '');
+    const rijStijl = isYuki ? 'background:rgba(201,168,76,0.05);border-top:1px solid rgba(201,168,76,0.2);' : '';
+    return `<tr data-naam="${naam}" style="${rijStijl}">
+      <td class="med-naam">${naamLabel}</td>
       <td><input type="number" min="0" class="num-input" value="${v!==undefined?v:''}" placeholder="—" style="width:90px;" oninput="updateBoekTotaal()"></td>
       <td style="font-size:13px;text-align:center;min-width:80px;">${verschil||'—'}</td>
     </tr>`;
