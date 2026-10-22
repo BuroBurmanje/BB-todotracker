@@ -389,6 +389,7 @@
 
   <div class="card">
     <div class="card-title">👥 Team beheren</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Actief team</div>
     <div id="team-lijst" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;"></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <input type="text" id="inp-nieuw-medewerker" placeholder="Naam nieuwe medewerker"
@@ -397,7 +398,11 @@
       <button class="btn-primary" onclick="voegMedewerkerToe()">+ Toevoegen</button>
       <span class="save-msg" id="save-msg-team">✓ Team opgeslagen</span>
     </div>
-    <p style="font-size:11px;color:var(--text-muted);margin-top:12px;">Klik op de ✕ naast een naam om die medewerker te verwijderen. Bestaande metingen blijven bewaard.</p>
+    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px;">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Oud-medewerkers</div>
+      <div id="oud-lijst" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+    </div>
+    <p style="font-size:11px;color:var(--text-muted);margin-top:12px;"><strong style="color:var(--gold)">M</strong> = zichtbaar in metingen-invoer &nbsp;|&nbsp; <strong style="color:var(--gold)">B</strong> = zichtbaar in boekingen-invoer &nbsp;|&nbsp; → oud = naar oud-medewerkers &nbsp;|&nbsp; ✕ = volledig verwijderen</p>
   </div>
 </div>
 
@@ -633,6 +638,15 @@
 </main>
 <script>
 let MEDEWERKERS = JSON.parse(localStorage.getItem('bb_medewerkers') || '["Cennet","Dennis","Gerjan","Iris","Janneke","Melvin","Mike","Mirjan","Natasja","René","Thom"]');
+let OUD_MEDEWERKERS = JSON.parse(localStorage.getItem('bb_oud_medewerkers') || '[]');
+// bb_zichtbaar: { "naam": { metingen: true, boekingen: true } } — standaard alles aan
+let BB_ZICHTBAAR = JSON.parse(localStorage.getItem('bb_zichtbaar') || '{}');
+function isZichtbaar(naam, type){ return BB_ZICHTBAAR[naam]?.[type] !== false; }
+function setZichtbaar(naam, type, aan){
+  if(!BB_ZICHTBAAR[naam]) BB_ZICHTBAAR[naam] = {};
+  BB_ZICHTBAAR[naam][type] = aan;
+  localStorage.setItem('bb_zichtbaar', JSON.stringify(BB_ZICHTBAAR));
+}
 const METRICS     = ['trans','vragen','radar','kwal','btw'];
 const M_LABELS    = ['Transacties','Vragen','Taken Radar','Kwal.controls','BTW'];
 const M_MAX_FACTOR= [1.5, 2.5, 4, 4, 5];
@@ -803,7 +817,7 @@ function buildInvoerTable(){
   const showDiff = currentType==='check' && metingen.length>0;
   const prev = showDiff ? [...metingen].reverse()[0] : null;
 
-  MEDEWERKERS.forEach(m=>{
+  MEDEWERKERS.filter(m=>isZichtbaar(m,'metingen')).forEach(m=>{
     const tr = document.createElement('tr');
     let diffCells = showDiff ? METRICS.map(metric=>`<td class="diff-cell" id="diff-${m}-${metric}">—</td>`).join('') : '';
     tr.innerHTML = `<td class="med-naam">${m}</td>`
@@ -936,14 +950,66 @@ function saveMeting(){
 }
 
 // ===== TEAM BEHEER =====
+function toggleKnop(naam, type){
+  const aan = isZichtbaar(naam, type);
+  setZichtbaar(naam, type, !aan);
+  renderTeam();
+  if(type === 'metingen') buildInvoerTable();
+}
+
 function renderTeam(){
   const el = document.getElementById('team-lijst');
-  if(!el) return;
-  el.innerHTML = MEDEWERKERS.map(m=>`
-    <div style="background:var(--navy-light);border:1px solid var(--border);border-radius:20px;padding:5px 12px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;">
-      ${m}
+  if(el) el.innerHTML = MEDEWERKERS.map(m=>{
+    const metAan = isZichtbaar(m, 'metingen');
+    const boekAan = isZichtbaar(m, 'boekingen');
+    return `<div style="background:var(--navy-light);border:1px solid var(--gold);border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;">
+      <span style="min-width:80px">${m}</span>
+      <button onclick="toggleKnop('${m}','metingen')" title="Metingen aan/uit"
+        style="background:${metAan?'var(--gold)':'var(--navy)'};border:1px solid var(--gold);color:${metAan?'var(--navy)':'var(--text-muted)'};cursor:pointer;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;">M</button>
+      <button onclick="toggleKnop('${m}','boekingen')" title="Boekingen aan/uit"
+        style="background:${boekAan?'var(--gold)':'var(--navy)'};border:1px solid var(--gold);color:${boekAan?'var(--navy)':'var(--text-muted)'};cursor:pointer;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;">B</button>
+      <button onclick="zetNaarOud('${m}')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:0 2px;line-height:1;opacity:0.7;" title="Naar oud-medewerkers">→ oud</button>
       <button onclick="verwijderMedewerker('${m}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0;line-height:1;" title="Verwijder ${m}">✕</button>
+    </div>`;
+  }).join('');
+  const oudEl = document.getElementById('oud-lijst');
+  if(oudEl) oudEl.innerHTML = OUD_MEDEWERKERS.length === 0
+    ? '<span style="font-size:12px;color:var(--text-muted)">Geen oud-medewerkers</span>'
+    : OUD_MEDEWERKERS.map(m=>`
+    <div style="background:var(--navy-light);border:1px solid var(--border);border-radius:20px;padding:5px 12px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--text-muted);">
+      ${m}
+      <button onclick="zetNaarActief('${m}')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:0 2px;line-height:1;opacity:0.7;" title="Terugzetten naar actief">→ actief</button>
+      <button onclick="verwijderOudMedewerker('${m}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0;line-height:1;" title="Verwijder ${m}">✕</button>
     </div>`).join('');
+}
+
+function verwijderOudMedewerker(naam){
+  if(!confirm(`${naam} volledig verwijderen?\n\nBoekingsdata blijft bewaard, maar de naam verdwijnt uit het team.`)) return;
+  OUD_MEDEWERKERS = OUD_MEDEWERKERS.filter(m=>m!==naam);
+  localStorage.setItem('bb_oud_medewerkers', JSON.stringify(OUD_MEDEWERKERS));
+  renderTeam();
+}
+
+function zetNaarOud(naam){
+  if(!confirm(`${naam} naar oud-medewerkers verplaatsen?\n\nBestaande metingen en boekingen blijven bewaard.`)) return;
+  MEDEWERKERS = MEDEWERKERS.filter(m=>m!==naam);
+  localStorage.setItem('bb_medewerkers', JSON.stringify(MEDEWERKERS));
+  if(!OUD_MEDEWERKERS.includes(naam)){ OUD_MEDEWERKERS.push(naam); localStorage.setItem('bb_oud_medewerkers', JSON.stringify(OUD_MEDEWERKERS)); }
+  renderTeam();
+  buildInvoerTable();
+  const msg = document.getElementById('save-msg-team');
+  if(msg){ msg.style.display='inline'; setTimeout(()=>msg.style.display='none',2500); }
+}
+
+function zetNaarActief(naam){
+  if(!confirm(`${naam} terugzetten naar actief team?`)) return;
+  OUD_MEDEWERKERS = OUD_MEDEWERKERS.filter(m=>m!==naam);
+  localStorage.setItem('bb_oud_medewerkers', JSON.stringify(OUD_MEDEWERKERS));
+  if(!MEDEWERKERS.includes(naam)){ MEDEWERKERS.push(naam); localStorage.setItem('bb_medewerkers', JSON.stringify(MEDEWERKERS)); }
+  renderTeam();
+  buildInvoerTable();
+  const msg = document.getElementById('save-msg-team');
+  if(msg){ msg.style.display='inline'; setTimeout(()=>msg.style.display='none',2500); }
 }
 
 function voegMedewerkerToe(){
@@ -2185,13 +2251,13 @@ function laadBoekingJaar(){
   if(!jaar) return;
   const vorigJaar = jaar - 1;
 
-  // Alle namen: huidig team + Yuki + eventuele oud-medewerkers in dit jaar
-  const alleNamen = [...new Set([...MEDEWERKERS, 'Yuki', ...getAlleNamenInJaar(jaar)])];
+  // Alle namen: huidig team + Nmbrs + eventuele oud-medewerkers in dit jaar
+  const alleNamen = [...new Set([...MEDEWERKERS, 'Nmbrs', ...getAlleNamenInJaar(jaar)])];
   const tbody = document.getElementById('boek-jaar-body');
 
   const maakInvoerRij = (naam, stijlKlasse) => {
-    const isOud = !MEDEWERKERS.includes(naam) && naam !== 'Yuki';
-    const isYuki = naam === 'Yuki';
+    const isOud = !MEDEWERKERS.includes(naam) && naam !== 'Nmbrs' && naam !== 'Yuki';
+    const isYuki = naam === 'Nmbrs' || naam === 'Yuki';
     const naamId = naam.replace(/[^a-zA-Z0-9]/g,'_');
 
     // Bereken bestaand totaal
@@ -2216,7 +2282,7 @@ function laadBoekingJaar(){
     if(isYuki) naamStijl += 'color:var(--gold);';
 
     const label = isYuki
-      ? `Yuki <span style="font-size:10px;color:var(--text-muted);font-weight:400">(automatisering)</span>`
+      ? `<span style="color:var(--gold)">Nmbrs</span>`
       : naam + (isOud ? ` <span style="font-size:10px;opacity:0.6">(oud)</span>` : '');
 
     return `<tr data-naam="${naam}" style="${isYuki?'background:rgba(201,168,76,0.05);border-top:1px solid rgba(201,168,76,0.3);':''}">
@@ -2229,26 +2295,26 @@ function laadBoekingJaar(){
   // Huidig team
   const teamRows = MEDEWERKERS.map(n=>maakInvoerRij(n, '')).join('');
 
-  // Oud-medewerkers in dit jaar (niet in huidig team, niet Yuki)
-  const oudInJaar = getAlleNamenInJaar(jaar).filter(n=>!MEDEWERKERS.includes(n)&&n!=='Yuki');
+  // Oud-medewerkers in dit jaar (niet in huidig team, niet Nmbrs)
+  const oudInJaar = getAlleNamenInJaar(jaar).filter(n=>!MEDEWERKERS.includes(n)&&n!=='Nmbrs'&&n!=='Yuki');
   const oudRows = oudInJaar.map(n=>maakInvoerRij(n,'')).join('');
 
-  // Yuki rij
-  const yukiRow = maakInvoerRij('Yuki','');
+  // Nmbrs rij
+  const yukiRow = maakInvoerRij('Nmbrs','');
 
   // Totaalrijen
-  const berekenMaandTotaal = (inclYuki) => Array.from({length:12},(_,m)=>{
+  const berekenMaandTotaal = (inclNmbrs) => Array.from({length:12},(_,m)=>{
     const key=`${jaar}-${String(m+1).padStart(2,'0')}`;
     return Object.entries(boekingen[key]||{}).reduce((a,[naam,v])=>{
-      if(!inclYuki && naam==='Yuki') return a;
+      if(!inclNmbrs && (naam==='Nmbrs'||naam==='Yuki')) return a;
       return a+(v||0);
     },0);
   });
 
-  const totaalZonderYuki = berekenMaandTotaal(false);
-  const totaalMetYuki = berekenMaandTotaal(true);
-  const totaalZonderYukiJaar = totaalZonderYuki.reduce((a,b)=>a+b,0);
-  const totaalMetYukiJaar = totaalMetYuki.reduce((a,b)=>a+b,0);
+  const totaalZonderNmbrs = berekenMaandTotaal(false);
+  const totaalMetNmbrs = berekenMaandTotaal(true);
+  const totaalZonderNmbrsJaar = totaalZonderNmbrs.reduce((a,b)=>a+b,0);
+  const totaalMetNmbrsJaar = totaalMetNmbrs.reduce((a,b)=>a+b,0);
 
   const maakTotaalRij = (label, waarden, jaarTotaal, kleur) =>
     `<tr style="border-top:2px solid var(--border);background:var(--navy)">
@@ -2262,7 +2328,7 @@ function laadBoekingJaar(){
     (oudRows ? `<tr><td colspan="14" style="padding:4px 8px;font-size:10px;color:var(--text-muted);background:var(--navy)">Oud-medewerkers</td></tr>${oudRows}` : '') +
     `<tr><td colspan="14" style="padding:0;"></td></tr>` +
     yukiRow +
-    maakTotaalRij('TOTAAL', totaalMetYuki, totaalMetYukiJaar, 'var(--gold)');
+    maakTotaalRij('TOTAAL', totaalMetNmbrs, totaalMetNmbrsJaar, 'var(--gold)');
 }
 
 function updateJaarRijTotaal(inp, naam, jaar){
@@ -2444,27 +2510,35 @@ function laadBoekingMaand(){
   const bestaand = boekingen[key] || {};
   const vorigJaar = boekingen[vorigJaarKey] || {};
 
-  // Alle namen: huidige medewerkers + Yuki + namen in bestaande data
-  const alleNamen = [...new Set([...MEDEWERKERS, 'Yuki', ...Object.keys(bestaand)])];
+  // Alle namen: actieve medewerkers (boekingen aan) + Nmbrs + namen in bestaande data (excl. oud-medewerkers zonder data)
+  const actieveBoek = MEDEWERKERS.filter(m=>isZichtbaar(m,'boekingen'));
+  const alleNamen = [...new Set([...actieveBoek, 'Nmbrs', ...Object.keys(bestaand)])];
 
   const tbody = document.getElementById('boek-invoer-body');
   tbody.innerHTML = alleNamen.map(naam=>{
-    const isYuki = naam === 'Yuki';
-    const isOud = !MEDEWERKERS.includes(naam) && !isYuki;
-    const v = bestaand[naam];
-    const vj = vorigJaar[naam];
+    const isNmbrs = naam === 'Nmbrs' || naam === 'Yuki';
+    const isOud = !MEDEWERKERS.includes(naam) && !isNmbrs;
+    // Oud-medewerkers zonder data deze maand niet tonen
+    const v = bestaand[naam] ?? (bestaand['Yuki'] !== undefined && naam === 'Nmbrs' ? bestaand['Yuki'] : undefined);
+    if(isOud && v === undefined) return '';
+    const vj = vorigJaar[naam] ?? (naam === 'Nmbrs' ? vorigJaar['Yuki'] : undefined);
     let verschil = '';
     if(v!==undefined && vj!==undefined){
       const d = v - vj;
       verschil = d>0 ? `<span style="color:var(--green)">↑${d.toLocaleString('nl-NL')}</span>` : d<0 ? `<span style="color:var(--red)">↓${Math.abs(d).toLocaleString('nl-NL')}</span>` : `<span style="color:var(--text-muted)">→</span>`;
     }
-    const naamLabel = isYuki
-      ? `<span style="color:var(--gold)">Yuki</span> <span style="font-size:10px;color:var(--text-muted)">(automatisering)</span>`
-      : naam + (isOud ? ` <span style="font-size:10px;color:var(--text-muted)">(oud)</span>` : '');
-    const rijStijl = isYuki ? 'background:rgba(201,168,76,0.05);border-top:1px solid rgba(201,168,76,0.2);' : '';
-    return `<tr data-naam="${naam}" style="${rijStijl}">
+    const naamDisplay = naam === 'Yuki' ? 'Nmbrs' : naam;
+    const naamLabel = isNmbrs
+      ? `<span style="color:var(--gold)">Nmbrs</span>`
+      : isOud ? `${naam} <span style="font-size:10px;color:var(--text-muted)">(oud)</span>`
+      : naam;
+    const rijStijl = isNmbrs ? 'background:rgba(201,168,76,0.05);border-top:1px solid rgba(201,168,76,0.2);' : isOud ? 'opacity:0.5;' : '';
+    const inputHtml = isOud
+      ? `<span style="font-size:13px;color:var(--text-muted);padding:4px 8px;">${v!==undefined?v.toLocaleString('nl-NL'):'—'}</span>`
+      : `<input type="number" min="0" class="num-input" value="${v!==undefined?v:''}" placeholder="—" style="width:90px;" oninput="updateBoekTotaal()">`;
+    return `<tr data-naam="${naam==='Yuki'?'Nmbrs':naam}" style="${rijStijl}">
       <td class="med-naam">${naamLabel}</td>
-      <td><input type="number" min="0" class="num-input" value="${v!==undefined?v:''}" placeholder="—" style="width:90px;" oninput="updateBoekTotaal()"></td>
+      <td>${inputHtml}</td>
       <td style="font-size:13px;text-align:center;min-width:80px;">${verschil||'—'}</td>
     </tr>`;
   }).join('');
