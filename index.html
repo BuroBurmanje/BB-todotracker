@@ -466,7 +466,7 @@
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
         <button class="btn-secondary" onclick="document.getElementById('excel-upload').click()">📥 Importeer uit Excel</button>
         <input type="file" id="excel-upload" accept=".xlsx,.xls" style="display:none" onchange="importeerExcel(event)">
-        <button class="btn-secondary" onclick="importeerHistorischeData()">📥 Laad ingebakken data (2021-2026)</button>
+        <button class="btn-secondary" onclick="resetAlleBoekingen()" style="border-color:var(--red);color:var(--red)">🗑 Alle boekingen wissen</button>
         <button class="btn-danger" onclick="if(confirm('Alle boekingen wissen?')){boekingen={};localStorage.setItem(\'bb_boekingen\',\'{}\');renderBoekingen();renderNamenBeheer();}" style="margin-left:auto;">🗑 Alles wissen</button>
       </div>
       <div id="namen-beheer-content"></div>
@@ -2424,31 +2424,80 @@ function renderCumulatiefGrafiek(){
 // boekingen = { "2024-01": { "Cennet": 150, "Dennis": 200, ... }, ... }
 
 // ===== HISTORISCHE BOEKINGEN (geïmporteerd uit Excel) =====
-const HISTORISCHE_BOEKINGEN = {"2021-01": {"Mike": 1723, "René": 30, "Natasja": 79, "Yvonne": 68, "Natascha": 50}, "2021-02": {"Mike": 4596, "René": 130, "Natasja": 1693, "Natascha": 459}, "2021-03": {"Mike": 5894, "René": 381, "Natasja": 3154, "Yvonne": 87, "Natascha": 451}, "2021-04": {"Mike": 5416, "René": 228, "Natasja": 3647, "Natascha": 1006}, "2021-05": {"Mike": 2568, "René": 244, "Natasja": 2407, "Natascha": 1414}, "2021-06": {"Mike": 2869, "René": 128, "Natasja": 3290, "Natascha": 881}, "2021-07": {"Mike": 6272, "René": 300, "Natasja": 2597, "Natascha": 1258}, "2021-08": {"Mike": 882, "René": 413, "Natasja": 1016, "Natascha": 673}, "2021-09": {"Mike": 3005, "René": 265, "Natasja": 3230, "Yvonne": 445, "Natascha": 1281}, "2021-10": {"Mike": 6779, "René": 403, "Natasja": 3108, "Natascha": 949}, "2021-11": {"Mike": 3776, "René": 3158, "Natasja": 2692, "Yvonne": 215, "Natascha": 149}, "2021-12": {"Mike": 1777, "René": 2533, "Natasja": 1634, "Natascha": 19}, "2022-01": {"Mike": 5729, "René": 16041, "Natasja": 4613, "Yvonne": -68, "Natascha": 205}, "2022-02": {"Mike": -624, "René": 9461, "Natasja": 2399, "Natascha": -24}, "2022-03": {"Mike": -2573, "René": 11121, "Natasja": 3482, "Yvonne": -87, "Natascha": 2594}, "2022-04": {"Mike": 3962, "René": 9558, "Natasja": 5077, "Yvonne": 564, "Natascha": -259}, "2022-05": {"Mike": 6579, "René": 5990, "Natasja": 6323, "Yvonne": 501, "Natascha": -223}, "2022-06": {"Mike": 3620, "René": 9493, "Natasja": 1387, "Natascha": -881}, "2022-07": {"Mike": 2368, "René": 11907, "Natasja": 4003, "Yvonne": 72, "Natascha": -1258}, "2022-08": {"Mike": 414, "René": 11923, "Natasja": 2410, "Natascha": -673}, "2022-09": {"Mike": 3532, "René": 11105, "Natasja": 4870, "Yvonne": -445, "Natascha": -1278}, "2022-10": {"Mike": 3475, "René": 12014, "Natasja": 4863, "Mirjan": 198, "Yvonne": 1533, "Natascha": -949}, "2022-11": {"Mike": 6949, "René": 11647, "Natasja": 4817, "Mirjan": 4686, "Yvonne": -212, "Natascha": -146}, "2022-12": {"Mike": 4262, "René": 7457, "Natasja": 7585, "Thom": 1, "Mirjan": 813, "Janneke": 1, "Natascha": -19}, "2023-01": {"Mike": 13726, "René": 9362, "Natasja": 6701, "Thom": 59, "Mirjan": 1419, "Natascha": -85}, "2023-02": {"Mike": 9054, "René": 9289, "Natasja": 9340, "Thom": 57, "Mirjan": 48, "Natascha": -145}, "2023-03": {"Mike": 21282, "René": 15620, "Natasja": 12512, "Thom": 3434, "Mirjan": 45, "Natascha": -1015}, "2023-04": {"Mike": 5627, "René": 11842, "Natasja": 7601, "Thom": 5648, "Mirjan": 726, "Yvonne": -188, "Natascha": -249}, "2023-05": {"Mike": 8602, "René": 7190, "Natasja": 3781, "Thom": 17560, "Mirjan": 9, "Yvonne": -167, "Natascha": -397}, "2023-06": {"Mike": 6702, "René": 5760, "Natasja": 6796, "Thom": 14464, "Iris": 127, "Mirjan": 6, "Janneke": 254}, "2023-07": {"Mike": 9959, "René": 12144, "Natasja": 4739, "Thom": 14636, "Yvonne": -24}, "2023-08": {"Mike": 1300, "René": 12214, "Natasja": 2719, "Thom": 11716, "Iris": 1, "Mirjan": 3, "Janneke": 2}, "2023-09": {"Mike": 4972, "René": 775, "Natasja": 5248, "Thom": 13109, "Mirjan": 12, "Natascha": -1}, "2023-10": {"Mike": 9320, "René": 10079, "Natasja": 6046, "Thom": 11992, "Mirjan": -66, "Yvonne": -511}, "2023-11": {"Mike": 3692, "René": -864, "Natasja": 6266, "Thom": 17009, "Mirjan": -1562, "Yvonne": -1, "Natascha": -1}, "2023-12": {"Mike": 1562, "René": 548, "Natasja": 3956, "Thom": 15043, "Evelyn Lammers": 1, "Iris": 1, "Mirjan": -271, "Janneke": 1, "Yvonne": 1}, "2024-01": {"Mike": 3668, "René": 5590, "Natasja": 3944, "Thom": 21175, "Iris": 131, "Mirjan": -473}, "2024-02": {"Mike": -1135, "René": -123, "Natasja": 2697, "Thom": 14835, "Iris": 106, "Mirjan": -16}, "2024-03": {"Mike": -4905, "René": 2421, "Natasja": 4512, "Thom": 15492, "Iris": 106, "Mirjan": -15}, "2024-04": {"Mike": 3669, "René": 464, "Natasja": 5712, "Thom": 22303, "Iris": 86, "Mirjan": -242}, "2024-05": {"Mike": 767, "René": -253, "Natasja": 6851, "Thom": 12915, "Iris": 128, "Mirjan": -3}, "2024-06": {"Mike": 2390, "René": 6082, "Natasja": 6742, "Thom": 13827, "Iris": 73, "Mirjan": -2}, "2024-07": {"Mike": 1794, "René": 2420, "Natasja": 7468, "Iris": 12593, "Thom": 11932}, "2024-08": {"Mike": 726, "René": -2749, "Natasja": 3744, "Iris": 12450, "Thom": 2586, "Mirjan": -1}, "2024-09": {"Mike": -883, "René": 736, "Natasja": 4295, "Iris": 10762, "Thom": 9865, "Mirjan": -4}, "2024-10": {"Evelyn Lammers": 324, "Mike": -1316, "René": 3308, "Natasja": 6024, "Iris": 12394, "Thom": 14700, "Yvonne": 786}, "2024-11": {"Evelyn Lammers": 1731, "Mike": 2745, "René": 1991, "Natasja": 4297, "Iris": 12888, "Thom": 10350, "Yvonne": 81}, "2024-12": {"Evelyn Lammers": 2537, "Mike": 6963, "René": 4207, "Natasja": 6183, "Iris": 10375, "Thom": 11289, "Yvonne": -1}, "2025-01": {"Evelyn Lammers": 2120, "Mike": 12542, "René": 10387, "Natasja": 9028, "Iris": 12733, "Thom": 5072, "Yvonne": 397}, "2025-02": {"Evelyn Lammers": 386, "Mike": 5615, "René": 2565, "Natasja": 4383, "Iris": 14825, "Thom": 10222, "Yvonne": 520}, "2025-03": {"Mike": 6522, "René": 1526, "Natasja": 4996, "Iris": 14782, "Thom": 11200, "Dennis": 12, "Yvonne": 2785}, "2025-04": {"Mike": 8292, "René": 7703, "Natasja": 5410, "Iris": 15188, "Thom": 10585, "Dennis": 275, "Yvonne": 1476}, "2025-05": {"Mike": 3867, "René": 2570, "Natasja": 4870, "Iris": 10063, "Thom": 11507, "Gerjan": 63, "Dennis": 1775, "Yvonne": 1840}, "2025-06": {"Mike": 2649, "René": -134, "Natasja": 5345, "Iris": 12264, "Thom": 11767, "Gerjan": 351, "Dennis": 1142, "Yvonne": 2050}, "2025-07": {"Mike": 5185, "René": 4760, "Natasja": 6128, "Iris": 9784, "Thom": 12214, "Gerjan": 585, "Dennis": 750, "Yvonne": 1667}, "2025-08": {"Mike": 3401, "René": 1388, "Natasja": 3427, "Iris": 7102, "Thom": 16053, "Gerjan": 531, "Yvonne": 1276}, "2025-09": {"Mike": 4375, "René": 1916, "Natasja": 4491, "Iris": 10810, "Thom": 13018, "Gerjan": 942, "Yvonne": 2876}, "2025-10": {"Evelyn Lammers": -108, "Mike": 9025, "René": 7693, "Natasja": 5023, "Iris": 8007, "Thom": 15113, "Gerjan": 1086, "Yvonne": 3808}, "2025-11": {"Evelyn Lammers": -577, "Mike": 1695, "Natasja": 4422, "Iris": 5876, "Thom": 9722, "René": -61, "Gerjan": 900, "Dennis": 859, "Yvonne": 1975}, "2025-12": {"Evelyn Lammers": -846, "Mike": 1894, "Natasja": 6006, "Iris": 5530, "Thom": 9543, "René": -359, "Gerjan": 825, "Dennis": 1322, "Yvonne": 1561}, "2026-01": {"Mike": 371, "René": 1552, "Natasja": 2047, "Thom": 5596, "Iris": 4945, "Gerjan": 1302, "Dennis": 3158, "Yvonne": 1618}, "2026-02": {"Mike": 212, "René": 660, "Natasja": 1188, "Thom": 5095, "Iris": 3330, "Gerjan": 1130, "Dennis": 1885, "Yvonne": 2463}, "2026-03": {"Mike": 2003, "René": 6582, "Natasja": 2903, "Thom": 8299, "Iris": 3046, "Gerjan": 1170, "Dennis": 6018, "Yvonne": -558}, "2026-04": {"Mike": 85, "René": 3651, "Natasja": 3061, "Thom": 1823, "Iris": 3556, "Gerjan": 1139, "Dennis": 6241, "Yvonne": -473}, "2026-05": {"Cennet": 4602, "Mike": 450, "René": -279, "Natasja": 1244, "Thom": 5325, "Iris": 2515, "Gerjan": 313, "Dennis": 4913, "Yvonne": -533}, "2026-06": {"Cennet": 8736, "Melvin": 2430, "Mike": 648, "René": 558, "Natasja": 2109, "Thom": 4507, "Iris": 5593, "Gerjan": 167, "Dennis": 2208, "Yvonne": -580}, "2026-07": {"Cennet": 8163, "Melvin": 2813, "Mike": 2626, "René": -23, "Natasja": 1420, "Thom": 3636, "Iris": 4075, "Gerjan": 533, "Dennis": 4830, "Yvonne": -531}, "2026-08": {"Mike": -1250, "René": -721, "Natasja": -1666, "Thom": -6040, "Iris": -3719, "Gerjan": -177, "Yvonne": -401}, "2026-09": {"Mike": -1594, "René": -849, "Natasja": -2235, "Thom": -5888, "Iris": -4767, "Gerjan": -314, "Yvonne": -937}, "2026-10": {"Mike": -3306, "René": -3415, "Natasja": -2630, "Thom": -7085, "Iris": -4015, "Gerjan": -362, "Yvonne": -1333}, "2026-11": {"Mike": -1108, "René": -319, "Natasja": -2239, "Thom": -4987, "Iris": -3357, "Gerjan": -300, "Dennis": -859, "Yvonne": -644}, "2026-12": {"Mike": -1506, "René": -448, "Natasja": -2913, "Thom": -4960, "Iris": -2962, "Gerjan": -275, "Dennis": -1322, "Yvonne": -499}};
+const HISTORISCHE_BOEKINGEN = {};
 let boekingen = {};
 
-const NMBRS_SEED_BOEKINGEN = {"2023-05":{"Nmbrs":17993,"Mike Paanakker":1550,"René Burmanje":1105,"Natasja van Zeeland":877,"Thom van den Broek":620,"Mirjan van Heesbeen":429,"Overige":244},"2023-06":{"Nmbrs":21386,"Mike Paanakker":2193,"René Burmanje":1232,"Natasja van Zeeland":1066,"Thom van den Broek":952,"Mirjan van Heesbeen":706,"Overige":261},"2023-07":{"Nmbrs":21705,"Mike Paanakker":2616,"René Burmanje":1463,"Natasja van Zeeland":1308,"Thom van den Broek":987,"Mirjan van Heesbeen":744,"Overige":289},"2023-08":{"Nmbrs":15692,"Mike Paanakker":1893,"René Burmanje":1218,"Natasja van Zeeland":1105,"Thom van den Broek":823,"Mirjan van Heesbeen":612,"Overige":207},"2023-09":{"Nmbrs":22106,"Mike Paanakker":2341,"René Burmanje":1687,"Natasja van Zeeland":1524,"Thom van den Broek":1203,"Mirjan van Heesbeen":889,"Natascha Mommersteeg":524,"Overige":570},"2023-10":{"Nmbrs":23890,"Mike Paanakker":2614,"René Burmanje":1923,"Natasja van Zeeland":1756,"Thom van den Broek":1389,"Mirjan van Heesbeen":987,"Natascha Mommersteeg":398,"Overige":312},"2023-11":{"Nmbrs":22540,"Mike Paanakker":2487,"René Burmanje":1834,"Natasja van Zeeland":1623,"Thom van den Broek":1298,"Mirjan van Heesbeen":923,"Ferry van Rooij":287,"Overige":198},"2023-12":{"Nmbrs":24180,"Mike Paanakker":2712,"René Burmanje":2034,"Natasja van Zeeland":1845,"Thom van den Broek":1456,"Mirjan van Heesbeen":1034,"Ferry van Rooij":412,"Overige":245},"2024-01":{"Nmbrs":27408,"Thom van den Broek":6711,"René Burmanje":3241,"Mike Paanakker":2901,"Natasja van Zeeland":2023,"Ferry van Rooij":3774,"Overige":511},"2024-02":{"Nmbrs":20986,"Thom van den Broek":4765,"Natasja van Zeeland":1984,"René Burmanje":1094,"Mike Paanakker":733,"Ferry van Rooij":5386,"Kees Burmanje":7,"Overige":483},"2024-03":{"Nmbrs":26371,"Thom van den Broek":5270,"Natasja van Zeeland":3014,"René Burmanje":2611,"Mike Paanakker":788,"Ferry van Rooij":6237,"Kees Burmanje":17,"Overige":411},"2024-04":{"Nmbrs":25167,"Thom van den Broek":7791,"Natasja van Zeeland":2712,"Mike Paanakker":2032,"René Burmanje":1701,"Ferry van Rooij":4124,"Kees Burmanje":8,"Overige":526},"2024-05":{"Nmbrs":24742,"Thom van den Broek":5799,"Natasja van Zeeland":2889,"Mike Paanakker":1432,"René Burmanje":743,"Ferry van Rooij":5493,"Kees Burmanje":7,"Overige":274},"2024-06":{"Nmbrs":24625,"Thom van den Broek":5835,"Natasja van Zeeland":3007,"René Burmanje":2811,"Mike Paanakker":1733,"Iris Rundberg":45,"Ferry van Rooij":2490,"Kees Burmanje":10,"Overige":416},"2024-07":{"Nmbrs":28150,"Thom van den Broek":5332,"Iris Rundberg":4039,"Natasja van Zeeland":3064,"René Burmanje":2352,"Mike Paanakker":1983,"Ferry van Rooij":4445,"Overige":454},"2024-08":{"Nmbrs":23338,"Iris Rundberg":3976,"Thom van den Broek":1932,"Natasja van Zeeland":1529,"René Burmanje":638,"Mike Paanakker":409,"Ferry van Rooij":4333,"Kees Burmanje":29,"Overige":175},"2024-09":{"Nmbrs":24099,"Thom van den Broek":4354,"Iris Rundberg":3500,"Natasja van Zeeland":2220,"René Burmanje":611,"Mike Paanakker":405,"Ferry van Rooij":3728,"Overige":329},"2024-10":{"Nmbrs":31557,"Thom van den Broek":5829,"Iris Rundberg":4052,"Natasja van Zeeland":2848,"René Burmanje":2370,"Mike Paanakker":950,"Ferry van Rooij":6024,"Kelly de Groen":262,"Evelyn Lammers":108,"Overige":501},"2024-11":{"Nmbrs":27153,"Thom van den Broek":4954,"Iris Rundberg":4237,"Natasja van Zeeland":2345,"Mike Paanakker":1640,"René Burmanje":921,"Evelyn Lammers":577,"Ferry van Rooij":192,"Kees Burmanje":29,"Kelly de Groen":27,"Overige":362},"2024-12":{"Nmbrs":31462,"Thom van den Broek":5185,"Iris Rundberg":3377,"Natasja van Zeeland":2792,"Mike Paanakker":2687,"René Burmanje":1492,"Evelyn Lammers":842,"Kees Burmanje":24,"Overige":376},"2025-01":{"Nmbrs":36739,"Mike Paanakker":5134,"René Burmanje":4294,"Iris Rundberg":4206,"Thom van den Broek":3932,"Natasja van Zeeland":3679,"Evelyn Lammers":1022,"Yvonne van Hemert":114,"Kees Burmanje":6,"Overige":466},"2025-02":{"Nmbrs":31648,"Iris Rundberg":4879,"Thom van den Broek":4852,"Natasja van Zeeland":2086,"Mike Paanakker":2061,"René Burmanje":1070,"Evelyn Lammers":193,"Yvonne van Hemert":157,"Kees Burmanje":8,"Overige":843},"2025-03":{"Nmbrs":37092,"Thom van den Broek":5269,"Iris Rundberg":4838,"Natasja van Zeeland":2650,"Mike Paanakker":2392,"René Burmanje":1294,"Janneke van Iersel":7,"Yvonne van Hemert":914,"Overige":516},"2025-04":{"Nmbrs":47805,"Thom van den Broek":6042,"Iris Rundberg":4986,"Mike Paanakker":3372,"René Burmanje":2973,"Natasja van Zeeland":2745,"Yvonne van Hemert":473,"Ferry van Rooij":275,"Overige":702},"2025-05":{"Nmbrs":39673,"Thom van den Broek":5794,"Iris Rundberg":4926,"Natasja van Zeeland":2546,"Mike Paanakker":1771,"René Burmanje":884,"Muzaffer":1361,"Ferry van Rooij":378,"Yvonne van Hemert":592,"Overige":411},"2025-06":{"Nmbrs":34634,"Thom van den Broek":7442,"Iris Rundberg":4881,"Natasja van Zeeland":3377,"Mike Paanakker":1606,"René Burmanje":925,"Gerjan de Wit":117,"Muzaffer":1364,"Yvonne van Hemert":674,"Overige":625},"2025-07":{"Nmbrs":58788,"Thom van den Broek":5717,"Iris Rundberg":4605,"Natasja van Zeeland":3056,"Mike Paanakker":2359,"René Burmanje":2116,"Gerjan de Wit":192,"Muzaffer":716,"Yvonne van Hemert":531,"Overige":553},"2025-08":{"Nmbrs":27472,"Thom van den Broek":5883,"Iris Rundberg":3696,"Natasja van Zeeland":1658,"Mike Paanakker":1250,"René Burmanje":557,"Mirjan van Heesbeen":59,"Janneke van Iersel":44,"Yvonne van Hemert":401,"Overige":468},"2025-09":{"Nmbrs":35214,"Thom van den Broek":5703,"Iris Rundberg":4723,"Natasja van Zeeland":2199,"Mike Paanakker":1594,"René Burmanje":840,"Gerjan de Wit":314,"Yvonne van Hemert":937,"Overige":561},"2025-10":{"Nmbrs":73255,"Thom van den Broek":6781,"Iris Rundberg":3974,"René Burmanje":3412,"Mike Paanakker":3306,"Natasja van Zeeland":2593,"Gerjan de Wit":357,"Yvonne van Hemert":1333,"Overige":718},"2025-11":{"Nmbrs":35138,"Thom van den Broek":4975,"Iris Rundberg":3335,"Natasja van Zeeland":2238,"Mike Paanakker":1108,"Dennis Aalbers":858,"René Burmanje":319,"Gerjan de Wit":300,"Yvonne van Hemert":644,"Ferry van Rooij":1,"Overige":368},"2025-12":{"Nmbrs":63359,"Thom van den Broek":4946,"Iris Rundberg":2962,"Natasja van Zeeland":2913,"Mike Paanakker":1499,"Dennis Aalbers":1322,"René Burmanje":448,"Gerjan de Wit":275,"Yvonne van Hemert":499,"Overige":192}};
+const NMBRS_SEED_BOEKINGEN = {
+  "2020-09": {"Nmbrs":783,"Mike":105,"Overig":33},
+  "2020-10": {"Mike":390,"Nmbrs":247,"Natascha":5,"Overig":425},
+  "2020-11": {"Natasja":1107,"Mike":258,"Nmbrs":203,"Natascha":104,"Kees":4,"René":2,"Overig":62},
+  "2020-12": {"Nmbrs":252,"Mike":126,"Natasja":98,"Natascha":25,"Kees":6,"René":6,"Overig":60},
+  "2021-01": {"Mike":1680,"Nmbrs":784,"Natasja":79,"Yvonne":68,"Natascha":50,"René":15,"Kees":3,"Overig":321},
+  "2021-02": {"Mike":4077,"Nmbrs":3272,"Natasja":1681,"Natascha":365,"René":80,"Kees":2,"Overig":106},
+  "2021-03": {"Nmbrs":7465,"Mike":5742,"Natasja":3077,"Natascha":369,"René":140,"Yvonne":87,"Kees":10,"Overig":139},
+  "2021-04": {"Nmbrs":12110,"Mike":5297,"Natasja":3573,"Natascha":880,"René":114,"Kees":7,"Overig":242},
+  "2021-05": {"Nmbrs":7134,"Mike":2459,"Natasja":2224,"Natascha":1218,"René":177,"Kees":3,"Overig":139},
+  "2021-06": {"Nmbrs":8652,"Natasja":3230,"Mike":2799,"Natascha":783,"René":85,"Kees":8,"Overig":130},
+  "2021-07": {"Nmbrs":11123,"Mike":5442,"Natasja":2553,"Natascha":965,"René":253,"Kees":15,"Overig":162},
+  "2021-08": {"Nmbrs":6309,"Natasja":1013,"Mike":855,"Natascha":589,"René":337,"Kees":51,"Yvonne vHemert":8,"Overig":84},
+  "2021-09": {"Nmbrs":8846,"Mike":2953,"Natasja":2891,"Natascha":1281,"Yvonne":445,"René":194,"Kees":2,"Overig":204},
+  "2021-10": {"Nmbrs":13172,"Mike":6187,"Natasja":2886,"Natascha":679,"René":281,"Kees":1,"Overig":220},
+  "2021-11": {"Nmbrs":9594,"Mike":3720,"René":2889,"Natasja":2609,"Yvonne":185,"Natascha":114,"Kees":2,"Overig":121},
+  "2021-12": {"Nmbrs":11605,"René":2196,"Mike":1704,"Natasja":1546,"Natascha":15,"Kees":1,"Yvonne":1,"Overig":135},
+  "2022-01": {"Nmbrs":11843,"René":4583,"Mike":2355,"Natasja":1430,"Natascha":38,"Kees":10,"Overig":314},
+  "2022-02": {"Nmbrs":8956,"René":2840,"Natasja":1263,"Mike":1135,"Natascha":126,"Kees":4,"Overig":294},
+  "2022-03": {"Nmbrs":11076,"René":3558,"Natasja":1951,"Mike":1036,"Natascha":970,"Kees":3,"Overig":374},
+  "2022-04": {"Nmbrs":12023,"Mike":3018,"René":2860,"Natasja":2749,"Natascha":231,"Yvonne":188,"Kees":4,"Overig":390},
+  "2022-05": {"Nmbrs":11183,"Mike":2901,"Natasja":2723,"René":1996,"Natascha":206,"Yvonne":167,"Overig":607},
+  "2022-06": {"Nmbrs":11509,"René":3008,"Mike":2092,"Natasja":1154,"Overig":475},
+  "2022-07": {"Nmbrs":13134,"René":3839,"Mike":2823,"Natasja":1758,"Yvonne":24,"Kees":19,"Yvonne vHemert":3,"Overig":435},
+  "2022-08": {"Nmbrs":9321,"René":3927,"Natasja":1051,"Mike":432,"Kees":3,"Overig":417},
+  "2022-09": {"Nmbrs":16150,"René":3641,"Natasja":2577,"Mike":2157,"Overig":441},
+  "2022-10": {"Nmbrs":15379,"René":3912,"Mike":3269,"Natasja":2225,"Yvonne":511,"Mirjan":66,"Overig":462},
+  "2022-11": {"Nmbrs":18515,"René":4759,"Mike":3502,"Natasja":2295,"Mirjan":1524,"Kees":2,"Overig":505},
+  "2022-12": {"Nmbrs":14771,"René":3217,"Natasja":2863,"Mike":1758,"Mirjan":271,"Overig":755},
+  "2023-01": {"Nmbrs":17965,"Mike":5287,"René":4321,"Natasja":2508,"Mirjan":473,"Kees":19,"Overig":850},
+  "2023-02": {"Nmbrs":16030,"René":3731,"Natasja":3347,"Mike":3310,"Kees":32,"Mirjan":14,"Overig":409},
+  "2023-03": {"Nmbrs":29984,"Mike":7252,"René":6106,"Natasja":4577,"Thom":1098,"Kees":31,"Mirjan":15,"Overig":523},
+  "2023-04": {"Nmbrs":24957,"René":4687,"Natasja":3324,"Mike":2847,"Thom":1848,"Mirjan":242,"Kees":39,"Yvonne vHemert":13,"Overig":516},
+  "2023-05": {"Nmbrs":19073,"Thom":5574,"Mike":3606,"René":2684,"Natasja":1980,"Kees":10,"Mirjan":3,"Overig":435},
+  "2023-06": {"Nmbrs":21634,"Thom":4489,"Mike":2862,"René":2696,"Natasja":2511,"Janneke":118,"Kees":4,"Overig":495},
+  "2023-07": {"Nmbrs":23040,"René":5029,"Thom":4726,"Mike":4073,"Natasja":2128,"Kees":9,"Overig":485},
+  "2023-08": {"Nmbrs":19149,"René":5161,"Thom":3808,"Natasja":1129,"Mike":527,"Kees":17,"Overig":308},
+  "2023-09": {"Nmbrs":22464,"Thom":4255,"Natasja":2443,"Mike":2173,"René":1371,"Mirjan":4,"Overig":562},
+  "2023-10": {"Nmbrs":27714,"René":4511,"Mike":4112,"Thom":3851,"Natasja":2606,"Kees":9,"Overig":538},
+  "2023-11": {"Nmbrs":22474,"Thom":5242,"Natasja":2718,"Mike":2296,"René":1155,"Ferry":467,"Kees":9,"Overig":377},
+  "2023-12": {"Nmbrs":25046,"Thom":5117,"Ferry":2786,"Natasja":2438,"Mike":1284,"René":1084,"Kees":2,"Overig":598},
+  "2024-01": {"Nmbrs":27408,"Thom":6711,"Ferry":3774,"René":3241,"Mike":2901,"Natasja":2023,"Overig":485},
+  "2024-02": {"Nmbrs":20986,"Ferry":5386,"Thom":4765,"Natasja":1984,"René":1094,"Mike":733,"Kees":7,"Overig":477},
+  "2024-03": {"Nmbrs":26371,"Ferry":6237,"Thom":5270,"Natasja":3014,"René":2611,"Mike":788,"Kees":17,"Overig":392},
+  "2024-04": {"Nmbrs":25167,"Thom":7791,"Ferry":4124,"Natasja":2712,"Mike":2032,"René":1701,"Kees":8,"Overig":515},
+  "2024-05": {"Nmbrs":24742,"Thom":5799,"Ferry":5493,"Natasja":2889,"Mike":1432,"René":743,"Kees":7,"Overig":268},
+  "2024-06": {"Nmbrs":24625,"Thom":5835,"Natasja":3007,"René":2811,"Ferry":2490,"Mike":1733,"Iris":45,"Kees":10,"Overig":415},
+  "2024-07": {"Nmbrs":28150,"Thom":5332,"Ferry":4445,"Iris":4039,"Natasja":3064,"René":2352,"Mike":1983,"Overig":450},
+  "2024-08": {"Nmbrs":23338,"Ferry":4333,"Iris":3976,"Thom":1932,"Natasja":1529,"René":638,"Mike":409,"Kees":29,"Overig":175},
+  "2024-09": {"Nmbrs":24099,"Thom":4354,"Ferry":3728,"Iris":3500,"Natasja":2220,"René":611,"Mike":405,"Overig":311},
+  "2024-10": {"Nmbrs":31557,"Ferry":6024,"Thom":5829,"Iris":4052,"Natasja":2848,"René":2370,"Mike":950,"Kelly dG":262,"Evelyn":108,"Overig":460},
+  "2024-11": {"Nmbrs":27153,"Thom":4954,"Iris":4237,"Natasja":2345,"Mike":1640,"René":921,"Evelyn":577,"Ferry":192,"Kees":29,"Kelly dG":27,"Overig":324},
+  "2024-12": {"Nmbrs":31462,"Thom":5185,"Iris":3377,"Natasja":2792,"Mike":2687,"René":1492,"Evelyn":842,"Kees":24,"Overig":356},
+  "2025-01": {"Nmbrs":36739,"Mike":5134,"René":4294,"Iris":4206,"Thom":3932,"Natasja":3679,"Evelyn":1022,"Yvonne vHemert":114,"Kees":6,"Overig":430},
+  "2025-02": {"Nmbrs":31648,"Iris":4879,"Thom":4852,"Natasja":2086,"Mike":2061,"René":1070,"Evelyn":193,"Yvonne vHemert":157,"Kees":8,"Overig":437},
+  "2025-03": {"Nmbrs":37092,"Thom":5269,"Iris":4838,"Natasja":2650,"Mike":2392,"René":1294,"Yvonne vHemert":914,"Ferry":12,"Janneke":7,"Overig":493},
+  "2025-04": {"Nmbrs":47805,"Thom":6042,"Iris":4986,"Mike":3372,"René":2973,"Natasja":2745,"Yvonne vHemert":473,"Ferry":275,"Overig":667},
+  "2025-05": {"Nmbrs":39673,"Thom":5794,"Iris":4926,"Natasja":2546,"Mike":1771,"Muzaffer":1361,"René":884,"Yvonne vHemert":592,"Ferry":378,"Gerjan":21,"Overig":381},
+  "2025-06": {"Nmbrs":34634,"Thom":7442,"Iris":4881,"Natasja":3377,"Mike":1606,"Muzaffer":1364,"René":925,"Yvonne vHemert":674,"Gerjan":117,"Janneke":4,"Overig":610},
+  "2025-07": {"Nmbrs":58788,"Thom":5717,"Iris":4605,"Natasja":3056,"Mike":2359,"René":2116,"Muzaffer":716,"Yvonne vHemert":531,"Gerjan":192,"Overig":538},
+  "2025-08": {"Nmbrs":27472,"Thom":5883,"Iris":3696,"Natasja":1658,"Mike":1250,"René":557,"Yvonne vHemert":401,"Gerjan":177,"Mirjan":59,"Janneke":44,"Overig":285},
+  "2025-09": {"Nmbrs":35214,"Thom":5703,"Iris":4723,"Natasja":2199,"Mike":1594,"Yvonne vHemert":937,"René":840,"Gerjan":314,"Overig":545},
+  "2025-10": {"Nmbrs":73255,"Thom":6781,"Iris":3974,"René":3412,"Mike":3306,"Natasja":2593,"Yvonne vHemert":1333,"Gerjan":357,"Overig":704},
+  "2025-11": {"Nmbrs":35138,"Thom":4975,"Iris":3335,"Natasja":2238,"Mike":1108,"Dennis":858,"Yvonne vHemert":644,"René":319,"Gerjan":300,"Ferry":1,"Overig":361},
+  "2025-12": {"Nmbrs":63359,"Thom":4946,"Iris":2962,"Natasja":2913,"Mike":1499,"Dennis":1322,"Yvonne vHemert":499,"René":448,"Gerjan":275,"Overig":179}
+};
 
 function laadNmbrsSeedData(){
-  const bestaand = localStorage.getItem('bb_boekingen');
-  const obj = bestaand ? JSON.parse(bestaand) : {};
-  // Hernoem eventuele oude 'Yuki' entries naar 'Nmbrs'
-  let gewijzigd = false;
-  Object.keys(obj).forEach(k=>{
-    if(obj[k]['Yuki'] !== undefined){
-      obj[k]['Nmbrs'] = (obj[k]['Nmbrs']||0) + obj[k]['Yuki'];
-      delete obj[k]['Yuki'];
-      gewijzigd = true;
-    }
-  });
-  // Laad seed als boekingen leeg zijn
-  if(Object.keys(obj).length === 0){
-    Object.assign(obj, NMBRS_SEED_BOEKINGEN);
-    gewijzigd = true;
-  }
-  if(gewijzigd){
-    localStorage.setItem('bb_boekingen', JSON.stringify(obj));
-    boekingen = obj;
+  if(!localStorage.getItem('bb_boekingen')){
+    boekingen = JSON.parse(JSON.stringify(NMBRS_SEED_BOEKINGEN));
+    localStorage.setItem('bb_boekingen', JSON.stringify(boekingen));
   }
 }
 
@@ -2459,44 +2508,18 @@ const MAANDEN = ['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','No
 const MAANDEN_LANG = ['Januari','Februari','Maart','April','Mai','Juni','Juli','Augustus','September','Oktober','November','December'];
 
 
-function importeerHistorischeData(){
-  if(!confirm('Historische data van 2021-2026 importeren?\n\nBestaande gegevens worden aangevuld (niet overschreven).')) return;
-  let toegevoegd = 0;
-  Object.entries(HISTORISCHE_BOEKINGEN).forEach(([key, maandData])=>{
-    if(!boekingen[key]) boekingen[key] = {};
-    Object.entries(maandData).forEach(([naam, val])=>{
-      if(boekingen[key][naam] === undefined){
-        boekingen[key][naam] = val;
-        toegevoegd++;
-      }
-    });
-  });
-  localStorage.setItem('bb_boekingen', JSON.stringify(boekingen));
-  slaBoekingOpInSheets();
+function resetAlleBoekingen(){
+  if(!confirm('Weet je zeker dat je ALLE boekingen wilt wissen?\n\nDit kan niet ongedaan worden gemaakt.')) return;
+  boekingen = {};
+  localStorage.removeItem('bb_boekingen');
   renderBoekingen();
-  alert(`✓ Klaar! ${toegevoegd} waarden toegevoegd.\n\nJe ziet nu data van 2021 t/m 2026.`);
+  alert('✓ Alle boekingen gewist. Je kunt nu opnieuw beginnen met invoeren.');
 }
 
 function laadBoekingen(){
   const opgeslagen = localStorage.getItem('bb_boekingen');
   if(opgeslagen){
-    const obj = JSON.parse(opgeslagen);
-    let gewijzigd = false;
-    Object.keys(obj).forEach(k=>{
-      // Hernoem 'Yuki' naar 'Nmbrs'
-      if(obj[k]['Yuki'] !== undefined){
-        obj[k]['Nmbrs'] = (obj[k]['Nmbrs']||0) + obj[k]['Yuki'];
-        delete obj[k]['Yuki'];
-        gewijzigd = true;
-      }
-      // Verwijder 'Ferry' (korte naam) — correcte data zit in 'Ferry van Rooij' via Nmbrs seed
-      if(obj[k]['Ferry'] !== undefined){
-        delete obj[k]['Ferry'];
-        gewijzigd = true;
-      }
-    });
-    if(gewijzigd) localStorage.setItem('bb_boekingen', JSON.stringify(obj));
-    boekingen = obj;
+    boekingen = JSON.parse(opgeslagen);
   }
 }
 
@@ -2691,7 +2714,7 @@ function renderBoekTabel(){
         if(!isOud) totaalRij[i]+=v;
         else oudTotaalRij[i]+=v;
       }
-      const kleur = v===undefined?'var(--border)':'var(--white)';
+      const kleur = v===undefined?'var(--text-muted)':'var(--white)';
       const bg = isOud ? '' : heatmapBg(v, maxV);
       return `<td style="text-align:center;color:${kleur};font-size:13px;${bg}">${v!==undefined?v.toLocaleString('nl-NL'):'—'}</td>`;
     }).join('');
@@ -2712,7 +2735,7 @@ function renderBoekTabel(){
     const cellen = MAANDEN.map((m,i)=>{
       const key = `${jaar}-${String(i+1).padStart(2,'0')}`;
       const v = boekingen[key]?.['Nmbrs'];
-      const kleur = v===undefined?'var(--border)':'var(--gold)';
+      const kleur = v===undefined?'var(--text-muted)':'var(--gold)';
       return `<td style="text-align:center;color:${kleur};font-size:13px;background:rgba(201,168,76,0.05)">${v!==undefined?v.toLocaleString('nl-NL'):'—'}</td>`;
     }).join('');
     const totaal = MAANDEN.reduce((a,m,i)=>{ const k=`${jaar}-${String(i+1).padStart(2,'0')}`; return a+(boekingen[k]?.['Nmbrs']||0); },0);
