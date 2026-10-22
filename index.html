@@ -2516,18 +2516,18 @@ function laadBoekingMaand(){
 
   const tbody = document.getElementById('boek-invoer-body');
   tbody.innerHTML = alleNamen.map(naam=>{
-    const isNmbrs = naam === 'Nmbrs' || naam === 'Yuki';
-    const isOud = !MEDEWERKERS.includes(naam) && !isNmbrs;
+    const isNmbrs = naam === 'Nmbrs';
+    const isOverige = naam === 'Overige' || naam === 'Overig';
+    const isOud = !MEDEWERKERS.includes(naam) && !isNmbrs && !isOverige;
     // Oud-medewerkers zonder data deze maand niet tonen
-    const v = bestaand[naam] ?? (bestaand['Yuki'] !== undefined && naam === 'Nmbrs' ? bestaand['Yuki'] : undefined);
+    const v = bestaand[naam];
     if(isOud && v === undefined) return '';
-    const vj = vorigJaar[naam] ?? (naam === 'Nmbrs' ? vorigJaar['Yuki'] : undefined);
+    const vj = vorigJaar[naam];
     let verschil = '';
     if(v!==undefined && vj!==undefined){
       const d = v - vj;
       verschil = d>0 ? `<span style="color:var(--green)">↑${d.toLocaleString('nl-NL')}</span>` : d<0 ? `<span style="color:var(--red)">↓${Math.abs(d).toLocaleString('nl-NL')}</span>` : `<span style="color:var(--text-muted)">→</span>`;
     }
-    const naamDisplay = naam === 'Yuki' ? 'Nmbrs' : naam;
     const naamLabel = isNmbrs
       ? `<span style="color:var(--gold)">Nmbrs</span>`
       : isOud ? `${naam} <span style="font-size:10px;color:var(--text-muted)">(oud)</span>`
@@ -2536,7 +2536,7 @@ function laadBoekingMaand(){
     const inputHtml = isOud
       ? `<span style="font-size:13px;color:var(--text-muted);padding:4px 8px;">${v!==undefined?v.toLocaleString('nl-NL'):'—'}</span>`
       : `<input type="number" min="0" class="num-input" value="${v!==undefined?v:''}" placeholder="—" style="width:90px;" oninput="updateBoekTotaal()">`;
-    return `<tr data-naam="${naam==='Yuki'?'Nmbrs':naam}" style="${rijStijl}">
+    return `<tr data-naam="${naam}" style="${rijStijl}">
       <td class="med-naam">${naamLabel}</td>
       <td>${inputHtml}</td>
       <td style="font-size:13px;text-align:center;min-width:80px;">${verschil||'—'}</td>
