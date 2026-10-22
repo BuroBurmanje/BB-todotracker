@@ -2755,18 +2755,29 @@ function renderBoekTabel(){
   // Gecombineerd totaal (huidig + oud) — voor als oud-medewerkers zichtbaar zijn
   const combCellen = totaalRij.map((v,i)=>{
     const c = v + oudTotaalRij[i];
-    return `<td style="text-align:center;font-weight:700;color:var(--gold);font-size:13px">${c?c.toLocaleString('nl-NL'):'—'}</td>`;
+    return `<td style="text-align:center;font-weight:700;color:var(--white);font-size:13px">${c?c.toLocaleString('nl-NL'):'—'}</td>`;
   }).join('');
   const combJaar = totaalJaar + oudTotaalRij.reduce((a,b)=>a+b,0);
+
+  // Nmbrs per maand berekenen voor grand total rij
+  const nmbrsCellen_arr = MAANDEN.map((_,i)=>{
+    const key=`${jaar}-${String(i+1).padStart(2,'0')}`;
+    return boekingen[key]?.['Nmbrs']||0;
+  });
+  const grandTotaalCellen = totaalRij.map((v,i)=>{
+    const c = v + oudTotaalRij[i] + nmbrsCellen_arr[i];
+    return `<td style="text-align:center;font-weight:700;color:var(--gold);font-size:13px">${c?c.toLocaleString('nl-NL'):'—'}</td>`;
+  }).join('');
+  const grandTotaalJaar = combJaar + nmbrsCellen_arr.reduce((a,b)=>a+b,0);
 
   const tabelId = `boek-tabel-${jaar}`;
   const oudSectie = oudNamen.length>0 ? `
     <tr><td colspan="14" style="padding:4px 8px;font-size:10px;color:var(--text-muted);background:var(--navy)">Oud-medewerkers</td></tr>
     ${oudRows}
     <tr style="border-top:1px solid var(--border);background:var(--navy)">
-      <td style="color:var(--text-muted);font-size:10px;font-weight:600">TOTAAL INCL. OUD</td>
+      <td style="color:var(--white);font-size:10px;font-weight:600">TOTAAL INCL. OUD</td>
       ${combCellen}
-      <td style="text-align:center;font-weight:700;color:var(--gold)">${combJaar.toLocaleString('nl-NL')}</td>
+      <td style="text-align:center;font-weight:700;color:var(--white)">${combJaar.toLocaleString('nl-NL')}</td>
     </tr>` : '';
 
   el.innerHTML = `<div style="display:flex;gap:12px;margin-bottom:8px;align-items:center;font-size:10px;color:var(--text-muted)">
@@ -2786,9 +2797,14 @@ function renderBoekTabel(){
       <tr style="border-top:2px solid var(--border)">
         <td style="color:var(--text-muted);font-size:10px;font-weight:600">TEAM TOTAAL</td>
         ${totaalCellen}
-        <td style="text-align:center;font-weight:700;color:var(--gold)">${totaalJaar.toLocaleString('nl-NL')}</td>
+        <td style="text-align:center;font-weight:700;color:var(--text-muted)">${totaalJaar.toLocaleString('nl-NL')}</td>
       </tr>
       ${oudSectie}
+      <tr style="border-top:2px solid var(--gold);background:rgba(201,168,76,0.06)">
+        <td style="color:var(--gold);font-size:10px;font-weight:700">TOTAAL INCL. NMBRS</td>
+        ${grandTotaalCellen}
+        <td style="text-align:center;font-weight:700;color:var(--gold);font-size:14px">${grandTotaalJaar.toLocaleString('nl-NL')}</td>
+      </tr>
     </tbody>
   </table></div></div>`;
 }
