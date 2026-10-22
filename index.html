@@ -2256,7 +2256,8 @@ function laadBoekingJaar(){
   const tbody = document.getElementById('boek-jaar-body');
 
   const maakInvoerRij = (naam, stijlKlasse) => {
-    const isOud = !MEDEWERKERS.includes(naam) && naam !== 'Nmbrs' && naam !== 'Yuki';
+    const isOverige = naam === 'Overige' || naam === 'Overig';
+    const isOud = !MEDEWERKERS.includes(naam) && naam !== 'Nmbrs' && naam !== 'Yuki' && !isOverige;
     const isYuki = naam === 'Nmbrs' || naam === 'Yuki';
     const naamId = naam.replace(/[^a-zA-Z0-9]/g,'_');
 
@@ -2296,7 +2297,7 @@ function laadBoekingJaar(){
   const teamRows = MEDEWERKERS.map(n=>maakInvoerRij(n, '')).join('');
 
   // Oud-medewerkers in dit jaar (niet in huidig team, niet Nmbrs)
-  const oudInJaar = getAlleNamenInJaar(jaar).filter(n=>!MEDEWERKERS.includes(n)&&n!=='Nmbrs'&&n!=='Yuki');
+  const oudInJaar = getAlleNamenInJaar(jaar).filter(n=>!MEDEWERKERS.includes(n)&&n!=='Nmbrs'&&n!=='Yuki'&&n!=='Overige'&&n!=='Overig');
   const oudRows = oudInJaar.map(n=>maakInvoerRij(n,'')).join('');
 
   // Nmbrs rij
@@ -2427,11 +2428,23 @@ let boekingen = {};
 const NMBRS_SEED_BOEKINGEN = {"2023-05":{"Nmbrs":17993,"Mike Paanakker":1550,"René Burmanje":1105,"Natasja van Zeeland":877,"Thom van den Broek":620,"Mirjan van Heesbeen":429,"Overige":244},"2023-06":{"Nmbrs":21386,"Mike Paanakker":2193,"René Burmanje":1232,"Natasja van Zeeland":1066,"Thom van den Broek":952,"Mirjan van Heesbeen":706,"Overige":261},"2023-07":{"Nmbrs":21705,"Mike Paanakker":2616,"René Burmanje":1463,"Natasja van Zeeland":1308,"Thom van den Broek":987,"Mirjan van Heesbeen":744,"Overige":289},"2023-08":{"Nmbrs":15692,"Mike Paanakker":1893,"René Burmanje":1218,"Natasja van Zeeland":1105,"Thom van den Broek":823,"Mirjan van Heesbeen":612,"Overige":207},"2023-09":{"Nmbrs":22106,"Mike Paanakker":2341,"René Burmanje":1687,"Natasja van Zeeland":1524,"Thom van den Broek":1203,"Mirjan van Heesbeen":889,"Natascha Mommersteeg":524,"Overige":570},"2023-10":{"Nmbrs":23890,"Mike Paanakker":2614,"René Burmanje":1923,"Natasja van Zeeland":1756,"Thom van den Broek":1389,"Mirjan van Heesbeen":987,"Natascha Mommersteeg":398,"Overige":312},"2023-11":{"Nmbrs":22540,"Mike Paanakker":2487,"René Burmanje":1834,"Natasja van Zeeland":1623,"Thom van den Broek":1298,"Mirjan van Heesbeen":923,"Ferry van Rooij":287,"Overige":198},"2023-12":{"Nmbrs":24180,"Mike Paanakker":2712,"René Burmanje":2034,"Natasja van Zeeland":1845,"Thom van den Broek":1456,"Mirjan van Heesbeen":1034,"Ferry van Rooij":412,"Overige":245},"2024-01":{"Nmbrs":27408,"Thom van den Broek":6711,"René Burmanje":3241,"Mike Paanakker":2901,"Natasja van Zeeland":2023,"Ferry van Rooij":3774,"Overige":511},"2024-02":{"Nmbrs":20986,"Thom van den Broek":4765,"Natasja van Zeeland":1984,"René Burmanje":1094,"Mike Paanakker":733,"Ferry van Rooij":5386,"Kees Burmanje":7,"Overige":483},"2024-03":{"Nmbrs":26371,"Thom van den Broek":5270,"Natasja van Zeeland":3014,"René Burmanje":2611,"Mike Paanakker":788,"Ferry van Rooij":6237,"Kees Burmanje":17,"Overige":411},"2024-04":{"Nmbrs":25167,"Thom van den Broek":7791,"Natasja van Zeeland":2712,"Mike Paanakker":2032,"René Burmanje":1701,"Ferry van Rooij":4124,"Kees Burmanje":8,"Overige":526},"2024-05":{"Nmbrs":24742,"Thom van den Broek":5799,"Natasja van Zeeland":2889,"Mike Paanakker":1432,"René Burmanje":743,"Ferry van Rooij":5493,"Kees Burmanje":7,"Overige":274},"2024-06":{"Nmbrs":24625,"Thom van den Broek":5835,"Natasja van Zeeland":3007,"René Burmanje":2811,"Mike Paanakker":1733,"Iris Rundberg":45,"Ferry van Rooij":2490,"Kees Burmanje":10,"Overige":416},"2024-07":{"Nmbrs":28150,"Thom van den Broek":5332,"Iris Rundberg":4039,"Natasja van Zeeland":3064,"René Burmanje":2352,"Mike Paanakker":1983,"Ferry van Rooij":4445,"Overige":454},"2024-08":{"Nmbrs":23338,"Iris Rundberg":3976,"Thom van den Broek":1932,"Natasja van Zeeland":1529,"René Burmanje":638,"Mike Paanakker":409,"Ferry van Rooij":4333,"Kees Burmanje":29,"Overige":175},"2024-09":{"Nmbrs":24099,"Thom van den Broek":4354,"Iris Rundberg":3500,"Natasja van Zeeland":2220,"René Burmanje":611,"Mike Paanakker":405,"Ferry van Rooij":3728,"Overige":329},"2024-10":{"Nmbrs":31557,"Thom van den Broek":5829,"Iris Rundberg":4052,"Natasja van Zeeland":2848,"René Burmanje":2370,"Mike Paanakker":950,"Ferry van Rooij":6024,"Kelly de Groen":262,"Evelyn Lammers":108,"Overige":501},"2024-11":{"Nmbrs":27153,"Thom van den Broek":4954,"Iris Rundberg":4237,"Natasja van Zeeland":2345,"Mike Paanakker":1640,"René Burmanje":921,"Evelyn Lammers":577,"Ferry van Rooij":192,"Kees Burmanje":29,"Kelly de Groen":27,"Overige":362},"2024-12":{"Nmbrs":31462,"Thom van den Broek":5185,"Iris Rundberg":3377,"Natasja van Zeeland":2792,"Mike Paanakker":2687,"René Burmanje":1492,"Evelyn Lammers":842,"Kees Burmanje":24,"Overige":376},"2025-01":{"Nmbrs":36739,"Mike Paanakker":5134,"René Burmanje":4294,"Iris Rundberg":4206,"Thom van den Broek":3932,"Natasja van Zeeland":3679,"Evelyn Lammers":1022,"Yvonne van Hemert":114,"Kees Burmanje":6,"Overige":466},"2025-02":{"Nmbrs":31648,"Iris Rundberg":4879,"Thom van den Broek":4852,"Natasja van Zeeland":2086,"Mike Paanakker":2061,"René Burmanje":1070,"Evelyn Lammers":193,"Yvonne van Hemert":157,"Kees Burmanje":8,"Overige":843},"2025-03":{"Nmbrs":37092,"Thom van den Broek":5269,"Iris Rundberg":4838,"Natasja van Zeeland":2650,"Mike Paanakker":2392,"René Burmanje":1294,"Janneke van Iersel":7,"Yvonne van Hemert":914,"Overige":516},"2025-04":{"Nmbrs":47805,"Thom van den Broek":6042,"Iris Rundberg":4986,"Mike Paanakker":3372,"René Burmanje":2973,"Natasja van Zeeland":2745,"Yvonne van Hemert":473,"Ferry van Rooij":275,"Overige":702},"2025-05":{"Nmbrs":39673,"Thom van den Broek":5794,"Iris Rundberg":4926,"Natasja van Zeeland":2546,"Mike Paanakker":1771,"René Burmanje":884,"Muzaffer":1361,"Ferry van Rooij":378,"Yvonne van Hemert":592,"Overige":411},"2025-06":{"Nmbrs":34634,"Thom van den Broek":7442,"Iris Rundberg":4881,"Natasja van Zeeland":3377,"Mike Paanakker":1606,"René Burmanje":925,"Gerjan de Wit":117,"Muzaffer":1364,"Yvonne van Hemert":674,"Overige":625},"2025-07":{"Nmbrs":58788,"Thom van den Broek":5717,"Iris Rundberg":4605,"Natasja van Zeeland":3056,"Mike Paanakker":2359,"René Burmanje":2116,"Gerjan de Wit":192,"Muzaffer":716,"Yvonne van Hemert":531,"Overige":553},"2025-08":{"Nmbrs":27472,"Thom van den Broek":5883,"Iris Rundberg":3696,"Natasja van Zeeland":1658,"Mike Paanakker":1250,"René Burmanje":557,"Mirjan van Heesbeen":59,"Janneke van Iersel":44,"Yvonne van Hemert":401,"Overige":468},"2025-09":{"Nmbrs":35214,"Thom van den Broek":5703,"Iris Rundberg":4723,"Natasja van Zeeland":2199,"Mike Paanakker":1594,"René Burmanje":840,"Gerjan de Wit":314,"Yvonne van Hemert":937,"Overige":561},"2025-10":{"Nmbrs":73255,"Thom van den Broek":6781,"Iris Rundberg":3974,"René Burmanje":3412,"Mike Paanakker":3306,"Natasja van Zeeland":2593,"Gerjan de Wit":357,"Yvonne van Hemert":1333,"Overige":718},"2025-11":{"Nmbrs":35138,"Thom van den Broek":4975,"Iris Rundberg":3335,"Natasja van Zeeland":2238,"Mike Paanakker":1108,"Dennis Aalbers":858,"René Burmanje":319,"Gerjan de Wit":300,"Yvonne van Hemert":644,"Ferry van Rooij":1,"Overige":368},"2025-12":{"Nmbrs":63359,"Thom van den Broek":4946,"Iris Rundberg":2962,"Natasja van Zeeland":2913,"Mike Paanakker":1499,"Dennis Aalbers":1322,"René Burmanje":448,"Gerjan de Wit":275,"Yvonne van Hemert":499,"Overige":192}};
 
 function laadNmbrsSeedData(){
-  // Laad Nmbrs historische data als bb_boekingen leeg is
   const bestaand = localStorage.getItem('bb_boekingen');
   const obj = bestaand ? JSON.parse(bestaand) : {};
+  // Hernoem eventuele oude 'Yuki' entries naar 'Nmbrs'
+  let gewijzigd = false;
+  Object.keys(obj).forEach(k=>{
+    if(obj[k]['Yuki'] !== undefined){
+      obj[k]['Nmbrs'] = (obj[k]['Nmbrs']||0) + obj[k]['Yuki'];
+      delete obj[k]['Yuki'];
+      gewijzigd = true;
+    }
+  });
+  // Laad seed als boekingen leeg zijn
   if(Object.keys(obj).length === 0){
     Object.assign(obj, NMBRS_SEED_BOEKINGEN);
+    gewijzigd = true;
+  }
+  if(gewijzigd){
     localStorage.setItem('bb_boekingen', JSON.stringify(obj));
     boekingen = obj;
   }
@@ -2464,7 +2477,20 @@ function importeerHistorischeData(){
 
 function laadBoekingen(){
   const opgeslagen = localStorage.getItem('bb_boekingen');
-  if(opgeslagen) boekingen = JSON.parse(opgeslagen);
+  if(opgeslagen){
+    const obj = JSON.parse(opgeslagen);
+    // Hernoem 'Yuki' naar 'Nmbrs' in alle periodes
+    let gewijzigd = false;
+    Object.keys(obj).forEach(k=>{
+      if(obj[k]['Yuki'] !== undefined){
+        obj[k]['Nmbrs'] = (obj[k]['Nmbrs']||0) + obj[k]['Yuki'];
+        delete obj[k]['Yuki'];
+        gewijzigd = true;
+      }
+    });
+    if(gewijzigd) localStorage.setItem('bb_boekingen', JSON.stringify(obj));
+    boekingen = obj;
+  }
 }
 
 function slaBoekingOp(){
@@ -2613,7 +2639,9 @@ function getAlleNamenInJaar(jaar){
   const namen = new Set();
   for(let m=1;m<=12;m++){
     const key = `${jaar}-${String(m).padStart(2,'0')}`;
-    Object.keys(boekingen[key]||{}).forEach(n=>namen.add(n));
+    Object.keys(boekingen[key]||{}).forEach(n=>{
+      namen.add(n === 'Yuki' ? 'Nmbrs' : n);
+    });
   }
   return [...namen].sort();
 }
@@ -2625,7 +2653,7 @@ function renderBoekTabel(){
   if(alleNamen.length===0){ el.innerHTML='<div class="empty-state"><div class="icon">📅</div>Nog geen boekingen voor '+jaar+'.</div>'; return; }
 
   const huidigNamen = alleNamen.filter(n=>MEDEWERKERS.includes(n));
-  const oudNamen = alleNamen.filter(n=>!MEDEWERKERS.includes(n));
+  const oudNamen = alleNamen.filter(n=>!MEDEWERKERS.includes(n)&&n!=='Nmbrs'&&n!=='Overige'&&n!=='Overig');
 
   const totaalRij = new Array(12).fill(0);
   const oudTotaalRij = new Array(12).fill(0);
@@ -2656,6 +2684,22 @@ function renderBoekTabel(){
   const huidigRows = huidigNamen.map(n=>maakRij(n,false)).join('');
   const oudRows = oudNamen.map(n=>maakRij(n,true)).join('');
 
+  // Nmbrs speciale rij (goud, altijd zichtbaar als er data is)
+  const nmbrsRow = alleNamen.includes('Nmbrs') ? (()=>{
+    const cellen = MAANDEN.map((m,i)=>{
+      const key = `${jaar}-${String(i+1).padStart(2,'0')}`;
+      const v = boekingen[key]?.['Nmbrs'];
+      const kleur = v===undefined?'var(--border)':'var(--gold)';
+      return `<td style="text-align:center;color:${kleur};font-size:13px;background:rgba(201,168,76,0.05)">${v!==undefined?v.toLocaleString('nl-NL'):'—'}</td>`;
+    }).join('');
+    const totaal = MAANDEN.reduce((a,m,i)=>{ const k=`${jaar}-${String(i+1).padStart(2,'0')}`; return a+(boekingen[k]?.['Nmbrs']||0); },0);
+    return `<tr style="border-top:1px solid rgba(201,168,76,0.3)">
+      <td style="font-weight:700;color:var(--gold);white-space:nowrap;font-size:13px">Nmbrs</td>
+      ${cellen}
+      <td style="text-align:center;font-weight:700;color:var(--gold)">${totaal.toLocaleString('nl-NL')}</td>
+    </tr>`;
+  })() : '';
+
   // Eerst huidig + oud berekend, nu totaalrijen maken
   const totaalCellen = totaalRij.map(v=>`<td style="text-align:center;font-weight:700;color:var(--gold);font-size:13px">${v?v.toLocaleString('nl-NL'):'—'}</td>`).join('');
   const totaalJaar = totaalRij.reduce((a,b)=>a+b,0);
@@ -2669,15 +2713,9 @@ function renderBoekTabel(){
 
   const tabelId = `boek-tabel-${jaar}`;
   const oudSectie = oudNamen.length>0 ? `
-    <tr><td colspan="14">
-      <button onclick="toggleOudRijen('${tabelId}')"
-        id="btn-oud-${tabelId}"
-        style="background:none;border:1px solid var(--border);color:var(--text-muted);padding:4px 12px;border-radius:5px;font-family:'Inter',sans-serif;font-size:11px;cursor:pointer;margin:6px 0;">
-        ▶ Toon oud-medewerkers (${oudNamen.length})
-      </button>
-    </td></tr>
-    ${oudRows.replace(/<tr>/g,`<tr class="oud-rij-${tabelId}" style="display:none">`)}
-    <tr class="oud-rij-${tabelId}" style="display:none;border-top:1px solid var(--border);background:var(--navy)">
+    <tr><td colspan="14" style="padding:4px 8px;font-size:10px;color:var(--text-muted);background:var(--navy)">Oud-medewerkers</td></tr>
+    ${oudRows}
+    <tr style="border-top:1px solid var(--border);background:var(--navy)">
       <td style="color:var(--text-muted);font-size:10px;font-weight:600">TOTAAL INCL. OUD</td>
       ${combCellen}
       <td style="text-align:center;font-weight:700;color:var(--gold)">${combJaar.toLocaleString('nl-NL')}</td>
@@ -2688,6 +2726,7 @@ function renderBoekTabel(){
       <th style="min-width:100px">Medewerker</th>${headers}<th style="text-align:center;min-width:60px">Totaal</th>
     </tr></thead>
     <tbody>
+      ${nmbrsRow}
       ${huidigRows}
       <tr style="border-top:2px solid var(--border)">
         <td style="color:var(--text-muted);font-size:10px;font-weight:600">TEAM TOTAAL</td>
