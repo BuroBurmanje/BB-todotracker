@@ -2496,11 +2496,28 @@ const NMBRS_SEED_BOEKINGEN = {
 
 function laadNmbrsSeedData(){
   const opgeslagen = localStorage.getItem('bb_boekingen');
-  // Laad seed als localStorage leeg is OF als het een leeg object is
   if(!opgeslagen || opgeslagen === '{}'){
+    // Niets in localStorage: laad volledige seed
     boekingen = JSON.parse(JSON.stringify(NMBRS_SEED_BOEKINGEN));
-    localStorage.setItem('bb_boekingen', JSON.stringify(boekingen));
+  } else {
+    // Er is al data: vul ontbrekende maanden/personen aan vanuit seed (seed = onderlaag)
+    const bestaand = JSON.parse(opgeslagen);
+    Object.entries(NMBRS_SEED_BOEKINGEN).forEach(([maand, seedData]) => {
+      if(!bestaand[maand]){
+        // Hele maand ontbreekt: neem seed over
+        bestaand[maand] = JSON.parse(JSON.stringify(seedData));
+      } else {
+        // Maand bestaat: vul alleen ontbrekende personen aan vanuit seed
+        Object.entries(seedData).forEach(([naam, waarde]) => {
+          if(bestaand[maand][naam] === undefined){
+            bestaand[maand][naam] = waarde;
+          }
+        });
+      }
+    });
+    boekingen = bestaand;
   }
+  localStorage.setItem('bb_boekingen', JSON.stringify(boekingen));
 }
 
 let boekJaarFilter = new Date().getFullYear();
