@@ -2495,7 +2495,9 @@ const NMBRS_SEED_BOEKINGEN = {
 };
 
 function laadNmbrsSeedData(){
-  if(!localStorage.getItem('bb_boekingen')){
+  const opgeslagen = localStorage.getItem('bb_boekingen');
+  // Laad seed als localStorage leeg is OF als het een leeg object is
+  if(!opgeslagen || opgeslagen === '{}'){
     boekingen = JSON.parse(JSON.stringify(NMBRS_SEED_BOEKINGEN));
     localStorage.setItem('bb_boekingen', JSON.stringify(boekingen));
   }
